@@ -30,6 +30,23 @@ Tasks Assigned:
 ## e. Preferred Platform - Adam Zahari 2314361
 ## f. Features and Functionalities - Syamin 2219501 & Sholihin 2210097
 
+### 1. Search and Filters
+Users can search for items by name, category, or price range.
+
+Filters help narrow down results (e.g., by condition: new/used, or item type: books, electronics, clothing).
+
+### 2. Real-Time Chat Between Buyer & Seller
+Built-in chat function allows instant communication using Firebase Realtime Database or Cloud Firestore.
+
+Users can discuss prices, arrange meetups, or ask about item details securely within the app.
+
+### 3. CRUD for Listings (with Image Upload via Firebase Storage)
+Sellers can Create, Read, Update, and Delete their listings.
+
+Item images are uploaded and stored securely using Firebase Storage.
+
+Each listing contains title, description, category, price, and seller contact.
+
 ---
 # Requirement Analysis & Planning
 ## 1. Evaluate technical feasibility - Adam 2314361
