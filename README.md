@@ -24,6 +24,9 @@ Tasks Assigned:
 ---
 # Project Ideation & Initiation
 ## a. Title - Hilmi 2218517
+i-Aswaq (Arabic for “the markets”) is a mobile marketplace application designed exclusively for IIUM students.
+It allows them to buy and sell new or used items conveniently within the campus community.
+
 ## b. Background of the Problem - Hilmi 2218517
 ## c. Purpose or Objective - Adam Zahari 2314361
 ## d. Target Users - Adam Zahari 2314361
