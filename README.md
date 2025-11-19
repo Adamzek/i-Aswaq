@@ -33,8 +33,14 @@ As the residents of Mahallahs on campus, we often rely on informal Mahallahs Wha
 The reason we proposed i-Aswaq, a centralized IIUM student-only marketplace is because it helps stream line transactions, build trust and promote sustainable reusability of items (e.g., used books, clothes, electronics, etc.) within the IIUM community.
 
 ## c. Purpose or Objective - Adam Zahari 2314361
+The main objective of i-Aswaq is to provide a secure and easy-to-use digital marketplace for IIUM students to buy and sell items conveniently on campus.
+
 ## d. Target Users - Adam Zahari 2314361
+The target users are IIUM Gombak Campus students who want a convenient way to buy and sell items within the university environment.
+
 ## e. Preferred Platform - Adam Zahari 2314361
+The preferred platform for development is Android.
+
 ## f. Features and Functionalities - Syamin 2219501 & Sholihin 2210097
 
 ### 1. Search and Filters
