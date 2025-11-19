@@ -28,7 +28,7 @@ i-Aswaq (Arabic for “the markets”) is a mobile marketplace application desig
 It allows them to buy and sell new or used items conveniently within the campus community.
 
 ## b. Background of the Problem - Hilmi 2218517
-As the residents of Mahallahs on campus, we often rely on informal Mahallahs WhatsApp groups to buy and sell items within the university.It is unorganized, lacks searchability and poses trust issues. This makes it difficult for buyers to find what they need and for sellers to reach the right audience.
+As the residents of Mahallahs on campus, we often rely on informal Mahallahs WhatsApp groups to buy and sell items within the university.It is unorganized, lacks of searchability and poses trust issues. This makes it difficult for buyers to find what they need and for sellers to reach the right audience.
 
 The reason we proposed i-Aswaq, a centralized IIUM student-only marketplace is because it helps stream line transactions, build trust and promote sustainable reusability of items (e.g., used books, clothes, electronics, etc.) within the IIUM community.
 
@@ -59,6 +59,14 @@ Sellers can Create, Read, Update, and Delete their listings.
 Item images are uploaded and stored securely using Firebase Storage.
 
 Each listing contains title, description, category, price, and seller contact.
+
+### 4. Firebase Authentication
+Ensures that only verified IIUM students can register and log in (e.g., using IIUM email).
+
+Protects user accounts and provides secure access control.
+
+### 5. Setup user profile
+Users can manage profile details such as name, contact, and profile picture
 
 ---
 # Requirement Analysis & Planning
