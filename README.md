@@ -195,7 +195,8 @@ O --> P[Edit Listing]
 P --> O
 ```
 
-## 3. Create Gantt Chart - 1 member
+## 3. Create Gantt Chart - Sholihin 2210097
+<img width="1321" height="783" alt="image" src="https://github.com/user-attachments/assets/a02ca090-0033-4a6b-8d94-f46744d4b0f4" />
 
 ---
 # Project Design
