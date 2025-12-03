@@ -156,6 +156,44 @@ Home → Search Bar → Search Results Screen → Item Details → Chat
 #### Filter Flow
 Home / Category List → Filter → Apply Filters → Filtered Results → Item Details
 
+#### Screen Navigation Flow
+
+```mermaid
+flowchart TD
+
+A[Splash Screen] --> B[Login / Register]
+
+B --> C[Home Screen]
+
+%% Bottom Navigation
+C <-..-> D[Categories]
+C <-..-> E[Sell]
+C <-..-> F[Chat]
+C <-..-> G[Profile]
+
+%% Home Flow
+C --> H[Search Results]
+H --> I[Item Details]
+C --> I
+I --> J[Chat with Seller]
+
+%% Categories Flow
+D --> K[Category Item List]
+K --> I
+
+%% Sell Flow
+E --> L[Create Listing Form]
+L --> M[Listing Confirmation]
+
+%% Chat Flow
+F --> N[Conversation Screen]
+N --> I
+
+%% Profile Flow
+G --> O[My Listings]
+O --> P[Edit Listing]
+P --> O
+```
 
 ## 3. Create Gantt Chart - 1 member
 
