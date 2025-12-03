@@ -58,6 +58,91 @@ Each listing contains title, description, category, price, and seller contact.
 # Requirement Analysis & Planning
 ## 1. Evaluate technical feasibility - Adam 2314361
 ## 2. Provide Sequence Diagram and Screen Navigation Flow - 2 members
+//Sequence Diagram
+
+//Screen Navigation Flow
+### i-Aswaq — Screen Navigation Flow
+
+#### 1. Splash Screen
+↓  
+#### 2. Login / Register Screen
+- Login  
+- Register  
+↓ (after successful login)
+
+---
+
+#### Main App Navigation (Bottom Navigation Bar)
+**Home | Categories | Sell | Chat | Profile**
+
+---
+
+##### A. Home Screen
+- Featured items  
+- Search bar → *Search Results Screen*  
+- Quick filters  
+
+#### Home → Item Details Screen
+- Images, price, description, seller info  
+- Buttons: Chat Seller, Report, Save  
+
+#### Item Details → Chat Screen
+
+---
+
+#### B. Categories Screen
+- List of item categories  
+
+#### Category → Category Item List Screen  
+#### Category Item List → Item Details Screen  
+(Then same flow as Home → Item Details)
+
+---
+
+#### C. Sell Screen (Create Listing)
+- Upload images  
+- Enter item details  
+- Select category & condition  
+
+#### Sell → Listing Confirmation Screen
+
+---
+
+#### D. Chat Screen
+- List of conversations  
+
+#### Chat → Conversation Screen
+- Real-time messaging  
+- Option to view linked item  
+
+#### Conversation → Item Details Screen
+
+---
+
+#### E. Profile Screen
+- Personal details  
+- My Listings  
+- Edit profile  
+- Logout  
+
+#### Profile → My Listings Screen
+- Edit listing  
+- Delete listing  
+
+#### My Listings → Edit Listing Screen  
+#### Edit Listing → Save Changes / Delete Listing
+
+---
+
+#### Additional Flows
+
+#### Search Flow
+Home → Search Bar → Search Results Screen → Item Details → Chat
+
+#### Filter Flow
+Home / Category List → Filter → Apply Filters → Filtered Results → Item Details
+
+
 ## 3. Create Gantt Chart - 1 member
 
 ---
