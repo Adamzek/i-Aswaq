@@ -80,11 +80,9 @@ Users can manage profile details such as name, contact, and profile picture
 ## 2. Provide Sequence Diagram and Screen Navigation Flow - 2 members
 
 ### i-Aswaq — Sequence Diagram
-<img width="482" height="884" alt="image" src="https://github.com/user-attachments/assets/75585320-23fe-4c03-abcf-67d104b39156" />
 
 <img width="885" height="708" alt="image" src="https://github.com/user-attachments/assets/1a7eb53c-f2b9-4a18-8c93-642ff0ba30f4" />
 <img width="903" height="748" alt="image" src="https://github.com/user-attachments/assets/4a603711-6f1d-4b72-987c-e4bca695ff1c" />
-
 
 ### i-Aswaq — Screen Navigation Flow
 #### 1. Splash Screen
