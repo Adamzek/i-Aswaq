@@ -70,7 +70,13 @@ Users can manage profile details such as name, contact, and profile picture
 
 ---
 # Requirement Analysis & Planning
+
 ## 1. Evaluate technical feasibility - Adam 2314361
+- The app will be developed for Android which is fully supported by Android Studio.
+- Firebase can be used for ready-made backend services (Auth, Realtime Database, Storage) that support all required features.
+- CRUD and image uploads are supported natively through Firebase Storage and Firebase SDKs.
+- Technology stack is stable, well-documented, and easy to integrate, minimizing technical complexity.
+
 ## 2. Provide Sequence Diagram and Screen Navigation Flow - 2 members
 //Sequence Diagram
 
