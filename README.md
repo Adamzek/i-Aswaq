@@ -78,11 +78,7 @@ Users can manage profile details such as name, contact, and profile picture
 - Technology stack is stable, well-documented, and easy to integrate, minimizing technical complexity.
 
 ## 2. Provide Sequence Diagram and Screen Navigation Flow - 2 members
-//Sequence Diagram
-
-//Screen Navigation Flow
 ### i-Aswaq — Screen Navigation Flow
-
 #### 1. Splash Screen
 ↓  
 #### 2. Login / Register Screen
