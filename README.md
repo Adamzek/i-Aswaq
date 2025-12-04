@@ -84,6 +84,62 @@ Users can manage profile details such as name, contact, and profile picture
 <img width="885" height="708" alt="image" src="https://github.com/user-attachments/assets/1a7eb53c-f2b9-4a18-8c93-642ff0ba30f4" />
 <img width="903" height="748" alt="image" src="https://github.com/user-attachments/assets/4a603711-6f1d-4b72-987c-e4bca695ff1c" />
 
+#### 1. User Registration & Login
+- User opens the i-Aswaq mobile app.
+- App displays the Registration / Login interface.
+- User enters verification details.
+- Back-end system verifies user details and returns confirmation.
+- App fetches and displays the Dashboard with user details.
+
+#### 2. Profile Management
+- User updates username, photo, or contact info.
+- App uploads the profile picture, receives the image URL.
+- App sends updated profile data to the back-end.
+- Back-end saves data and returns a confirmation.
+- Updated profile is displayed to the user.
+
+#### 3. Searching & Filtering Items
+- User performs a Search Item action (e.g., name or title).
+- Back-end processes search and returns matching listings.
+- User applies filters (category, price).
+- App sends filter request to back-end.
+- Back-end returns the filtered item list for display.
+
+#### 4. Viewing Item Details
+- User selects an item from the list.
+- App requests item details from the back-end.
+- Back-end fetches item details and returns them.
+- App displays the complete Item Details page.
+
+#### 5. Creating a New Listing
+- User selects Create New Listing.
+- User enters item details and uploads images.
+- App uploads images and receives image URLs.
+- App sends item data + image URLs to the back-end.
+- Back-end saves the listing and confirms creation.
+- App displays the newly added listing.
+
+#### 6. Editing a Listing
+- User initiates Edit Listing.
+- App requests for existing item details.
+- User modifies text or uploads new images.
+- New images replace previous ones in storage.
+- Updated listing data is saved and the back-end confirms.
+- App displays the Edited Listing.
+
+#### 7. Deleting a Listing
+- User chooses to Delete Listing.
+- Back-end removes listing data and related images.
+- Back-end confirms deletion and app updates the display.
+
+#### 8. Chat System
+- User initiates Chat with Seller.
+- Back-end opens and prepares a chat room.
+- User sends a message.
+- Back-end stores and broadcasts the message.
+- App shows a sent message indicator to the user.
+
+
 ### i-Aswaq — Screen Navigation Flow
 #### 1. Splash Screen
 ↓  
