@@ -77,7 +77,7 @@ Users can manage profile details such as name, contact, and profile picture
 - CRUD and image uploads are supported natively through Firebase Storage and Firebase SDKs.
 - Technology stack is stable, well-documented, and easy to integrate, minimizing technical complexity.
 
-## 2. Provide Sequence Diagram and Screen Navigation Flow - 2 members
+## 2. Provide Sequence Diagram and Screen Navigation Flow - Hilmi 2218517 & Syamin 2219501
 
 ### i-Aswaq — Sequence Diagram
 
@@ -264,16 +264,14 @@ P --> O
 
 ---
 # Project Design
-## UI and UX - 2 members
-//Utilize the mobile design principles to accommodate small screen navigation with Flutter UI widgets and gestures.
-//Accommodate navigation with human intuition or user experience principles and avoid confusion in navigating various screens.
-//Come up with simple design using Figma(for better visualization) 
-## Consistency - 1 member 
-//Color, logo, screen, form, design pattern are consistent throughout multiple screens.
-## Design Integration & Review - 1 member
-//Assist other members in verifying usability and flow.
-//Check for alignment between UI, UX, and consistency standards.
-//Ensure all design components follow the same design system.
+## UI and UX - Adam 2314361 & Sholihin 2210097
+Figma - https://www.figma.com/design/NAHfUOrQXcoUweKFwgPuNQ/i-aswaq?node-id=3-3147&t=qpilxBLIUQ8Y8URc-1
+## Consistency - Syamin 2219501
+- logo 
+## Design Integration & Review - Hilmi 2218517
+- Assist other members in verifying usability and flow.
+- Check for alignment between UI, UX, and consistency standards.
+- Ensure all design components follow the same design system.
 
 ---
 # Project Development
