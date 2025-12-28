@@ -267,7 +267,10 @@ P --> O
 ## UI and UX - Adam 2314361 & Sholihin 2210097
 Figma - https://www.figma.com/design/NAHfUOrQXcoUweKFwgPuNQ/i-aswaq?node-id=3-3147&t=qpilxBLIUQ8Y8URc-1
 ## Consistency - Syamin 2219501
-- logo 
+- Here's our logo :
+
+<img src="logo\i-aswaq_logo.png" width="400">
+
 ## Design Integration & Review - Hilmi 2218517
 - Assist other members in verifying usability and flow.
 - Check for alignment between UI, UX, and consistency standards.
