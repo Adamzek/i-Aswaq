@@ -1,16 +1,294 @@
-# i_aswaq
+# i-Aswaq
+# Group Name : Glory
+## Members
+**ADAM BIN MUHAMMAD ZAHARI**  
+Matric No. : 2314361  
+Tasks Assigned:
+1. purpose, target users and preferred platform
 
-A new Flutter project.
+**AHMAD SHOLIHIN BIN KAMARUDDIN**  
+Matric No. : 2210097  
+Tasks Assigned:
+1. features and functionalities
 
-## Getting Started
+**MUHAMMAD HILMI BIN MOHD NAZI**  
+Matric No. : 2218517  
+Tasks Assigned:
+1. title and background of the problem
 
-This project is a starting point for a Flutter application.
+**NIK MOHAMAD SYAMIN BIN MAT RAPI**  
+Matric No. : 2219501  
+Tasks Assigned:
+1. features and functionalities
 
-A few resources to get you started if this is your first Flutter project:
+---
+# Project Ideation & Initiation
+## a. Title - Hilmi 2218517
+i-Aswaq (Arabic for “the markets”) is a mobile marketplace application designed exclusively for IIUM students.
+It allows them to buy and sell new or used items conveniently within the campus community.
 
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
+## b. Background of the Problem - Hilmi 2218517
+As the residents of Mahallahs on campus, we often rely on informal Mahallahs WhatsApp groups to buy and sell items within the university.It is unorganized, lacks of searchability and poses trust issues. This makes it difficult for buyers to find what they need and for sellers to reach the right audience.
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+The reason we proposed i-Aswaq, a centralized IIUM student-only marketplace is because it helps stream line transactions, build trust and promote sustainable reusability of items (e.g., used books, clothes, electronics, etc.) within the IIUM community.
+
+## c. Purpose or Objective - Adam Zahari 2314361
+The main objective of i-Aswaq is to provide a secure and easy-to-use digital marketplace for IIUM students to buy and sell items conveniently on campus.
+
+## d. Target Users - Adam Zahari 2314361
+The target users are IIUM Gombak Campus students who want a convenient way to buy and sell items within the university environment.
+
+## e. Preferred Platform - Adam Zahari 2314361
+The preferred platform for development is Android.
+
+## f. Features and Functionalities - Syamin 2219501 & Sholihin 2210097
+
+### 1. Search and Filters
+Users can search for items by name, category, or price range.
+
+Filters help narrow down results (e.g., by condition: new/used, or item type: books, electronics, clothing).
+
+### 2. Real-Time Chat Between Buyer & Seller
+Built-in chat function allows instant communication using Firebase Realtime Database or Cloud Firestore.
+
+Users can discuss prices, arrange meetups, or ask about item details securely within the app.
+
+### 3. CRUD for Listings (with Image Upload via Firebase Storage)
+Sellers can Create, Read, Update, and Delete their listings.
+
+Item images are uploaded and stored securely using Firebase Storage.
+
+Each listing contains title, description, category, price, and seller contact.
+
+### 4. Firebase Authentication
+Ensures that only verified IIUM students can register and log in (e.g., using IIUM email).
+
+Protects user accounts and provides secure access control.
+
+### 5. Setup user profile
+Users can manage profile details such as name, contact, and profile picture
+
+---
+# Requirement Analysis & Planning
+
+## 1. Evaluate technical feasibility - Adam 2314361
+- The app will be developed for Android which is fully supported by Android Studio.
+- Firebase can be used for ready-made backend services (Auth, Realtime Database, Storage) that support all required features.
+- CRUD and image uploads are supported natively through Firebase Storage and Firebase SDKs.
+- Technology stack is stable, well-documented, and easy to integrate, minimizing technical complexity.
+
+## 2. Provide Sequence Diagram and Screen Navigation Flow - Hilmi 2218517 & Syamin 2219501
+
+### i-Aswaq — Sequence Diagram
+
+<img width="885" height="708" alt="image" src="https://github.com/user-attachments/assets/1a7eb53c-f2b9-4a18-8c93-642ff0ba30f4" />
+<img width="903" height="748" alt="image" src="https://github.com/user-attachments/assets/4a603711-6f1d-4b72-987c-e4bca695ff1c" />
+
+#### 1. User Registration & Login
+- User opens the i-Aswaq mobile app.
+- App displays the Registration / Login interface.
+- User enters verification details.
+- Back-end system verifies user details and returns confirmation.
+- App fetches and displays the Dashboard with user details.
+
+#### 2. Profile Management
+- User updates username, photo, or contact info.
+- App uploads the profile picture, receives the image URL.
+- App sends updated profile data to the back-end.
+- Back-end saves data and returns a confirmation.
+- Updated profile is displayed to the user.
+
+#### 3. Searching & Filtering Items
+- User performs a Search Item action (e.g., name or title).
+- Back-end processes search and returns matching listings.
+- User applies filters (category, price).
+- App sends filter request to back-end.
+- Back-end returns the filtered item list for display.
+
+#### 4. Viewing Item Details
+- User selects an item from the list.
+- App requests item details from the back-end.
+- Back-end fetches item details and returns them.
+- App displays the complete Item Details page.
+
+#### 5. Creating a New Listing
+- User selects Create New Listing.
+- User enters item details and uploads images.
+- App uploads images and receives image URLs.
+- App sends item data + image URLs to the back-end.
+- Back-end saves the listing and confirms creation.
+- App displays the newly added listing.
+
+#### 6. Editing a Listing
+- User initiates Edit Listing.
+- App requests for existing item details.
+- User modifies text or uploads new images.
+- New images replace previous ones in storage.
+- Updated listing data is saved and the back-end confirms.
+- App displays the Edited Listing.
+
+#### 7. Deleting a Listing
+- User chooses to Delete Listing.
+- Back-end removes listing data and related images.
+- Back-end confirms deletion and app updates the display.
+
+#### 8. Chat System
+- User initiates Chat with Seller.
+- Back-end opens and prepares a chat room.
+- User sends a message.
+- Back-end stores and broadcasts the message.
+- App shows a sent message indicator to the user.
+
+
+### i-Aswaq — Screen Navigation Flow
+#### 1. Splash Screen
+↓  
+#### 2. Login / Register Screen
+- Login  
+- Register  
+↓ (after successful login)
+
+---
+
+#### Main App Navigation (Bottom Navigation Bar)
+**Home | Categories | Sell | Chat | Profile**
+
+---
+
+##### A. Home Screen
+- Featured items  
+- Search bar → *Search Results Screen*  
+- Quick filters  
+
+#### Home → Item Details Screen
+- Images, price, description, seller info  
+- Buttons: Chat Seller, Report, Save  
+
+#### Item Details → Chat Screen
+
+---
+
+#### B. Categories Screen
+- List of item categories  
+
+#### Category → Category Item List Screen  
+#### Category Item List → Item Details Screen  
+(Then same flow as Home → Item Details)
+
+---
+
+#### C. Sell Screen (Create Listing)
+- Upload images  
+- Enter item details  
+- Select category & condition  
+
+#### Sell → Listing Confirmation Screen
+
+---
+
+#### D. Chat Screen
+- List of conversations  
+
+#### Chat → Conversation Screen
+- Real-time messaging  
+- Option to view linked item  
+
+#### Conversation → Item Details Screen
+
+---
+
+#### E. Profile Screen
+- Personal details  
+- My Listings  
+- Edit profile  
+- Logout  
+
+#### Profile → My Listings Screen
+- Edit listing  
+- Delete listing  
+
+#### My Listings → Edit Listing Screen  
+#### Edit Listing → Save Changes / Delete Listing
+
+---
+
+#### Additional Flows
+
+#### Search Flow
+Home → Search Bar → Search Results Screen → Item Details → Chat
+
+#### Filter Flow
+Home / Category List → Filter → Apply Filters → Filtered Results → Item Details
+
+#### Screen Navigation Flow
+
+```mermaid
+flowchart TD
+
+A[Splash Screen] --> B[Login / Register]
+
+B --> C[Home Screen]
+
+%% Bottom Navigation
+C <-..-> D[Categories]
+C <-..-> E[Sell]
+C <-..-> F[Chat]
+C <-..-> G[Profile]
+
+%% Home Flow
+C --> H[Search Results]
+H --> I[Item Details]
+C --> I
+I --> J[Chat with Seller]
+
+%% Categories Flow
+D --> K[Category Item List]
+K --> I
+
+%% Sell Flow
+E --> L[Create Listing Form]
+L --> M[Listing Confirmation]
+
+%% Chat Flow
+F --> N[Conversation Screen]
+N --> I
+
+%% Profile Flow
+G --> O[My Listings]
+O --> P[Edit Listing]
+P --> O
+```
+
+## 3. Create Gantt Chart - Sholihin 2210097
+<img width="1321" height="783" alt="image" src="https://github.com/user-attachments/assets/a02ca090-0033-4a6b-8d94-f46744d4b0f4" />
+
+---
+# Project Design
+## UI and UX - Adam 2314361 & Sholihin 2210097
+Figma - https://www.figma.com/design/NAHfUOrQXcoUweKFwgPuNQ/i-aswaq?node-id=3-3147&t=qpilxBLIUQ8Y8URc-1
+## Consistency - Syamin 2219501
+- Here's our logo :
+
+<img src="logo\i-aswaq_logo.png" width="400">
+
+## Design Integration & Review - Hilmi 2218517
+- Assist other members in verifying usability and flow.
+- Check for alignment between UI, UX, and consistency standards.
+- Ensure all design components follow the same design system.
+
+---
+# Project Development
+## Implement Core functionalities
+//Implement the item listing feature (Create, Read, Update, Delete).
+//Implement the item details screen (display description, images, seller info).
+//Implement the search function (search by item name, category).
+//Implement filters (price range, condition, category).
+//Implement the real-time chat screen UI components.
+//Handle navigation structure between Home → Categories → Item Details → Chat.
+//Connect UI buttons and form inputs to their respective controllers/functions.
+//Ensure screens load correctly with dummy data before backend integration.
+
+---
+# References
+
+
