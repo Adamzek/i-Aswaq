@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'main_navigation.dart';
 
 class LoginScreen extends StatelessWidget {
   const LoginScreen({super.key});
@@ -7,12 +8,15 @@ class LoginScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text('i-Aswaq Login')),
-      body: const Center(
-        child: Text(
-          'Login Screen',
-          style: TextStyle(fontSize: 20),
-        ),
-      ),
+      body: ElevatedButton(
+  onPressed: () {
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(builder: (context) => const MainNavigation()),
+    );
+  },
+  child: const Text('Login'),
+),
     );
   }
 }
