@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
-import 'screens/home_screen.dart';
-import 'screens/add_item_screen.dart';
+import 'home_screen.dart';
+import 'add_item_screen.dart';
+import 'chat_screen.dart';
+import 'profile_screen.dart';
+import 'categories_screen.dart';
 
 class MainNavigation extends StatefulWidget {
   const MainNavigation({super.key});
@@ -15,9 +18,9 @@ class _MainNavigationState extends State<MainNavigation> {
   // Screens for each navigation item
   final List<Widget> _screens = [
     const HomeScreen(),
-    const Center(child: Text('Categories')),
-    const Center(child: Text('Chat')),
-    const Center(child: Text('Profile')),
+    const CategoriesScreen(),
+    const ChatScreen(),
+    const ProfileScreen(),
   ];
 
   @override
@@ -33,7 +36,7 @@ class _MainNavigationState extends State<MainNavigation> {
           // Navigates to the Add Item Screen
           Navigator.push(
             context,
-            MaterialPageRoute(builder: (context) => const AddItemScreen()),
+            MaterialPageRoute(builder: (context) => const AddItemPage()),
           );
         }, 
         backgroundColor: const Color(0xFFD4A017),
