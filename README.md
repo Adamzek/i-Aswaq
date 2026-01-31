@@ -279,16 +279,15 @@ Figma - https://www.figma.com/design/NAHfUOrQXcoUweKFwgPuNQ/i-aswaq?node-id=3-31
 ---
 # Project Development
 ## Implement Core functionalities
-//Implement the item listing feature (Create, Read, Update, Delete).
-//Implement the item details screen (display description, images, seller info).
-//Implement the search function (search by item name, category).
-//Implement filters (price range, condition, category).
-//Implement the real-time chat screen UI components.
-//Handle navigation structure between Home → Categories → Item Details → Chat.
-//Connect UI buttons and form inputs to their respective controllers/functions.
-//Ensure screens load correctly with dummy data before backend integration.
+1. Implement the item listing feature (Create, Read, Update, Delete) - Sholihin 2210097
+2. Implement the home screen & item details screen (display description, images, seller info) - Hilmi 2218517
+3. Implement the search function (search by item name, category) - Adam 2314361
+4. Implement filters (price range, condition, category) - Hilmi 2218517 & Sholihin 2210097
+5. Implement the real-time chat screen UI components - Syamin 2219501 & Adam 2314361
+6. Handle navigation structure between Home → Categories → Item Details → Chat - Adam 2314361 & Syamin 2219501
+7. Connect UI buttons and form inputs to their respective controllers/functions - everyone
+8. Ensure screens load correctly with dummy data before backend integration - everyone
 
 ---
 # References
-
 
