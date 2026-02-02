@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'conversation_screen.dart';
 
 class ChatScreen extends StatelessWidget {
   const ChatScreen({super.key});
@@ -15,7 +16,7 @@ class ChatScreen extends StatelessWidget {
             const Padding(
               padding: EdgeInsets.all(20.0),
               child: Text(
-                'Messages',
+                'Chat',
                 style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
               ),
             ),
@@ -44,61 +45,16 @@ class ChatScreen extends StatelessWidget {
             // Conversations List
             Expanded(
               child: ListView(
-                children: [ // adjust the actual conversation data respectively
+                children: [
+                  // Dummy chat - will be replaced with real-time data later
                   _buildConversationTile(
                     initial: 'A',
-                    name: 'Ahmad Faisal',
+                    name: 'Ahmad Faisal (Dummy)',
                     message: 'Is the MacBook still available?',
                     time: '2m ago',
-                    unreadCount: 2,
-                    productImage: 'macbook',
-                    onTap: () {
-                      // TODO: Navigate to chat conversation screen
-                    },
-                  ),
-                  _buildConversationTile(
-                    initial: 'N',
-                    name: 'Nurul Izzah',
-                    message: 'Can we meet tomorrow at KENMS?',
-                    time: '1h ago',
-                    unreadCount: 0,
-                    productImage: 'book',
-                    onTap: () {
-                      // TODO: Navigate to chat conversation screen
-                    },
-                  ),
-                  _buildConversationTile(
-                    initial: 'M',
-                    name: 'Muhammad Hafiz',
-                    message: 'Thanks! The book is in great condition 👍',
-                    time: '3h ago',
-                    unreadCount: 0,
-                    productImage: 'book',
-                    onTap: () {
-                      // TODO: Navigate to chat conversation screen
-                    },
-                  ),
-                  _buildConversationTile(
-                    initial: 'S',
-                    name: 'Siti Aminah',
-                    message: 'I can do RM250 for the desk',
-                    time: '1d ago',
                     unreadCount: 1,
-                    productImage: 'table',
-                    onTap: () {
-                      // TODO: Navigate to chat conversation screen
-                    },
-                  ),
-                  _buildConversationTile(
-                    initial: 'I',
-                    name: 'Ismail Rahman',
-                    message: 'Deal! When can you deliver?',
-                    time: '2d ago',
-                    unreadCount: 0,
-                    productImage: 'headphone',
-                    onTap: () {
-                      // TODO: Navigate to chat conversation screen
-                    },
+                    productImage: 'macbook',
+                    context: context,
                   ),
                 ],
               ),
@@ -116,12 +72,23 @@ class ChatScreen extends StatelessWidget {
     required String time,
     required int unreadCount,
     required String productImage,
-    required VoidCallback onTap,
+    required BuildContext context,
   }) {
     return Material(
       color: Colors.white,
       child: InkWell(
-        onTap: onTap,
+        onTap: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => ConversationScreen(
+                userName: name,
+                userInitial: initial,
+                productImage: productImage,
+              ),
+            ),
+          );
+        },
         splashColor: Colors.grey.withValues(alpha: 0.2),
         highlightColor: Colors.grey.withValues(alpha: 0.1),
         child: Padding(
