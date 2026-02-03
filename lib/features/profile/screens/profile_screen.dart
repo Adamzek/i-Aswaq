@@ -1,7 +1,49 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'settings_screen.dart';
 
-class ProfileScreen extends StatelessWidget {
+class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
+
+  @override
+  State<ProfileScreen> createState() => _ProfileScreenState();
+}
+
+class _ProfileScreenState extends State<ProfileScreen> {
+  final FirebaseAuth _auth = FirebaseAuth.instance;
+  String _userName = 'User';
+  String _userEmail = '';
+  String? _userInitial;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadUserData();
+  }
+
+  void _loadUserData() {
+    final user = _auth.currentUser;
+    if (user != null) {
+      setState(() {
+        _userEmail = user.email ?? '';
+        
+        // Use displayName if available, otherwise generate a username
+        if (user.displayName != null && user.displayName!.isNotEmpty) {
+          _userName = user.displayName!;
+        } else {
+          // Generate username from email or UID
+          if (user.email != null) {
+            _userName = 'User${user.email!.split('@')[0].substring(0, 3).toUpperCase()}';
+          } else {
+            _userName = 'User${user.uid.substring(0, 6).toUpperCase()}';
+          }
+        }
+        
+        // Get first letter of username for avatar
+        _userInitial = _userName.isNotEmpty ? _userName[0].toUpperCase() : 'U';
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -25,7 +67,15 @@ class ProfileScreen extends StatelessWidget {
                     style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
                   ),
                   IconButton(
-                    onPressed: () {
+                    onPressed: () async {
+                      await Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const SettingsScreen(),
+                        ),
+                      );
+                      // Reload user data when returning from settings
+                      _loadUserData();
                     },
                     icon: const Icon(Icons.settings_outlined),
                   ),
@@ -34,7 +84,7 @@ class ProfileScreen extends StatelessWidget {
               const SizedBox(height: 25),
 
               // 2. The User Info Card (Cream colored box)
-              _buildUserInfoCard(screenWidth),
+              _buildUserInfoCard(screenWidth, context),
               const SizedBox(height: 25),
 
               // 3. Stats Row (The 3 small cards)
@@ -66,60 +116,6 @@ class ProfileScreen extends StatelessWidget {
                 ],
               ),
               const SizedBox(height: 30),
-              _buildSection(
-                title: 'Settings',
-                children: [
-                  _buildMenuTile(
-                    Icons.edit_outlined,
-                    'Edit Profile',
-                    '',
-                    () {},
-                  ),
-                  _buildMenuTile(
-                    Icons.notifications_outlined,
-                    'Notifications',
-                    '',
-                    () {},
-                  ),
-                  _buildMenuTile(
-                    Icons.shield_outlined,
-                    'Privacy & Safety',
-                    '',
-                    () {},
-                  ),
-                ],
-              ),
-              const SizedBox(height: 30),
-              _buildSection(
-                title: 'About',
-                children: [
-                  _buildMenuTile(
-                    Icons.description_outlined,
-                    'Terms & Conditions',
-                    '',
-                    () {},
-                  ),
-                  _buildMenuTile(
-                    Icons.help_outline,
-                    'Contact Support',
-                    '',
-                    () {},
-                  ),
-                ],
-              ),
-              const SizedBox(height: 30),
-              Center(
-                child: TextButton.icon(
-                  onPressed: () {
-                  },
-                  icon: const Icon(Icons.logout, color: Colors.red),
-                  label: const Text(
-                    'Logout',
-                    style: TextStyle(color: Colors.red, fontSize: 16),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 20),
             ],
           ),
         ),
@@ -127,7 +123,7 @@ class ProfileScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildUserInfoCard(double screenWidth) {
+  Widget _buildUserInfoCard(double screenWidth, BuildContext context) {
     return Container(
       padding: EdgeInsets.all(screenWidth * 0.05),
       decoration: BoxDecoration(
@@ -142,27 +138,27 @@ class ProfileScreen extends StatelessWidget {
               CircleAvatar(
                 radius: 40,
                 backgroundColor: const Color(0xFFF2D06B).withValues(alpha: 0.3),
-                child: const Text(
-                  'A',
-                  style: TextStyle(fontSize: 30, color: Color(0xFFD4A017)),
+                child: Text(
+                  _userInitial ?? 'U',
+                  style: const TextStyle(fontSize: 30, color: Color(0xFFD4A017)),
                 ),
               ),
               const SizedBox(width: 15),
               // Name and Email
-              const Expanded(
+              Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Ahmad Faisal',
-                      style: TextStyle(
+                      _userName,
+                      style: const TextStyle(
                         fontSize: 20,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
                     Text(
-                      'ahmad.faisal@live.iium.edu.my',
-                      style: TextStyle(
+                      _userEmail,
+                      style: const TextStyle(
                         color: Colors.grey,
                         fontSize: 13,
                       ),
@@ -178,7 +174,15 @@ class ProfileScreen extends StatelessWidget {
           SizedBox(
             width: double.infinity,
             child: OutlinedButton.icon(
-              onPressed: () {
+              onPressed: () async {
+                await Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const SettingsScreen(),
+                  ),
+                );
+                // Reload user data when returning from settings
+                _loadUserData();
               },
               icon: const Icon(
                 Icons.edit_outlined,
