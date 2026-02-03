@@ -290,5 +290,5 @@ Figma - https://www.figma.com/design/NAHfUOrQXcoUweKFwgPuNQ/i-aswaq?node-id=3-31
 
 ---
 # References
-
-
+1. ChatGPT to scaffold base structure of the app - https://chatgpt.com/share/69819414-fa88-8003-814d-d4d65eaf0a19
+2. 
