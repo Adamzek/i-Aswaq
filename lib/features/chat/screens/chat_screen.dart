@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../core/models/chat_message.dart';
+import 'conversation_screen.dart';
 
 class ChatScreen extends StatefulWidget {
   const ChatScreen({super.key});
@@ -92,6 +93,17 @@ class _ChatScreenState extends State<ChatScreen> {
       color: Colors.white,
       child: InkWell(
         onTap: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => ConversationScreen(
+                chatId: 'chat_${message.initial}',
+                userName: message.userName,
+                userInitial: message.initial,
+                productImage: 'book',
+              ),
+            ),
+          );
         },
         splashColor: Colors.grey.withValues(alpha: 0.2),
         highlightColor: Colors.grey.withValues(alpha: 0.1),

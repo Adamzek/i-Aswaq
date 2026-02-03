@@ -1,12 +1,16 @@
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 class ConversationScreen extends StatefulWidget {
+  final String chatId;
   final String userName;
   final String userInitial;
   final String productImage;
 
   const ConversationScreen({
     super.key,
+    required this.chatId,
     required this.userName,
     required this.userInitial,
     required this.productImage,
@@ -18,30 +22,8 @@ class ConversationScreen extends StatefulWidget {
 
 class _ConversationScreenState extends State<ConversationScreen> {
   final TextEditingController _messageController = TextEditingController();
-  final List<Map<String, dynamic>> _messages = [];
-
-  @override
-  void initState() {
-    super.initState();
-    // replace this with actual data from backend
-    _messages.addAll([
-      {
-        'text': 'Hi! Is this item still available?',
-        'isSent': false,
-        'time': '10:30 AM',
-      },
-      {
-        'text': 'Yes, it is! Are you interested?',
-        'isSent': true,
-        'time': '10:32 AM',
-      },
-      {
-        'text': 'Yes i am! Can we meet to see it?',
-        'isSent': false,
-        'time': '10:35 AM',
-      },
-    ]);
-  }
+  final FirebaseFirestore firestore = FirebaseFirestore.instance;
+  final FirebaseAuth auth = FirebaseAuth.instance;
 
   @override
   void dispose() {
@@ -50,14 +32,19 @@ class _ConversationScreenState extends State<ConversationScreen> {
   }
 
   void _sendMessage() {
-    if (_messageController.text.trim().isEmpty) return;
+    String messageText = _messageController.text.trim();
+    if (messageText.isEmpty) return;
 
-    setState(() {
-      _messages.add({
-        'text': _messageController.text.trim(),
-        'isSent': true,
-        'time': TimeOfDay.now().format(context),
-      });
+    String currentUserId = auth.currentUser!.uid;
+
+    firestore
+        .collection('chats')
+        .doc(widget.chatId)
+        .collection('messages')
+        .add({
+      'text': messageText,
+      'senderId': currentUserId,
+      'timestamp': FieldValue.serverTimestamp(),
     });
 
     _messageController.clear();
@@ -205,15 +192,57 @@ class _ConversationScreenState extends State<ConversationScreen> {
 
           // Messages list
           Expanded(
-            child: ListView.builder(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              itemCount: _messages.length,
-              itemBuilder: (context, index) {
-                final message = _messages[index];
-                return _buildMessageBubble(
-                  text: message['text'],
-                  isSent: message['isSent'],
-                  time: message['time'],
+            child: StreamBuilder<QuerySnapshot>(
+              stream: firestore
+                  .collection('chats')
+                  .doc(widget.chatId)
+                  .collection('messages')
+                  .orderBy('timestamp', descending: true)
+                  .snapshots(),
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return const Center(child: CircularProgressIndicator());
+                }
+
+                if (snapshot.hasError) {
+                  return const Center(child: Text('Error loading messages'));
+                }
+
+                if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+                  return const Center(
+                    child: Text(
+                      'No messages yet. Start the conversation!',
+                      style: TextStyle(color: Colors.grey),
+                    ),
+                  );
+                }
+
+                List<DocumentSnapshot> messages = snapshot.data!.docs;
+                String currentUserId = auth.currentUser!.uid;
+
+                return ListView.builder(
+                  reverse: true,
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  itemCount: messages.length,
+                  itemBuilder: (context, index) {
+                    Map<String, dynamic> data = messages[index].data() as Map<String, dynamic>;
+                    String text = data['text'] ?? '';
+                    String senderId = data['senderId'] ?? '';
+                    Timestamp? timestamp = data['timestamp'];
+
+                    bool isSentByMe = senderId == currentUserId;
+                    String time = '';
+                    if (timestamp != null) {
+                      DateTime dateTime = timestamp.toDate();
+                      time = '${dateTime.hour}:${dateTime.minute.toString().padLeft(2, '0')}';
+                    }
+
+                    return _buildMessageBubble(
+                      text: text,
+                      isSentByMe: isSentByMe,
+                      time: time,
+                    );
+                  },
                 );
               },
             ),
@@ -285,16 +314,16 @@ class _ConversationScreenState extends State<ConversationScreen> {
 
   Widget _buildMessageBubble({
     required String text,
-    required bool isSent,
+    required bool isSentByMe,
     required String time,
   }) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
       child: Row(
         mainAxisAlignment:
-            isSent ? MainAxisAlignment.end : MainAxisAlignment.start,
+            isSentByMe ? MainAxisAlignment.end : MainAxisAlignment.start,
         children: [
-          if (!isSent) ...[
+          if (!isSentByMe) ...[
             CircleAvatar(
               radius: 16,
               backgroundColor: _getAvatarColor(widget.userInitial),
@@ -313,12 +342,12 @@ class _ConversationScreenState extends State<ConversationScreen> {
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
               decoration: BoxDecoration(
-                color: isSent ? const Color(0xFFD4A017) : const Color(0xFFF5F5F5),
+                color: isSentByMe ? const Color(0xFFD4A017) : const Color(0xFFF5F5F5),
                 borderRadius: BorderRadius.only(
                   topLeft: const Radius.circular(16),
                   topRight: const Radius.circular(16),
-                  bottomLeft: Radius.circular(isSent ? 16 : 4),
-                  bottomRight: Radius.circular(isSent ? 4 : 16),
+                  bottomLeft: Radius.circular(isSentByMe ? 16 : 4),
+                  bottomRight: Radius.circular(isSentByMe ? 4 : 16),
                 ),
               ),
               child: Column(
@@ -328,7 +357,7 @@ class _ConversationScreenState extends State<ConversationScreen> {
                     text,
                     style: TextStyle(
                       fontSize: 14,
-                      color: isSent ? Colors.white : Colors.black87,
+                      color: isSentByMe ? Colors.white : Colors.black87,
                     ),
                   ),
                   const SizedBox(height: 4),
@@ -336,7 +365,7 @@ class _ConversationScreenState extends State<ConversationScreen> {
                     time,
                     style: TextStyle(
                       fontSize: 10,
-                      color: isSent
+                      color: isSentByMe
                           ? Colors.white.withValues(alpha: 0.8)
                           : Colors.grey[600],
                     ),
@@ -345,7 +374,7 @@ class _ConversationScreenState extends State<ConversationScreen> {
               ),
             ),
           ),
-          if (isSent) const SizedBox(width: 8),
+          if (isSentByMe) const SizedBox(width: 8),
         ],
       ),
     );

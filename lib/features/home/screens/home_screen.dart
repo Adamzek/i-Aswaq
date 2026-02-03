@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import '../../listing/screens/item_details_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -186,12 +187,13 @@ class _HomeScreenState extends State<HomeScreen> {
       itemCount: docs.length,
       itemBuilder: (context, index) {
         Map<String, dynamic> data = docs[index].data() as Map<String, dynamic>;
-        return _buildProductCard(data);
+        String listingId = docs[index].id;
+        return _buildProductCard(data, listingId);
       },
     );
   }
 
-  Widget _buildProductCard(Map<String, dynamic> data) {
+  Widget _buildProductCard(Map<String, dynamic> data, String listingId) {
     String title = data['title'] ?? 'No Title';
     double price = (data['price'] ?? 0).toDouble();
     String seller = data['seller'] ?? 'Unknown';
@@ -199,10 +201,19 @@ class _HomeScreenState extends State<HomeScreen> {
     List<dynamic> images = data['images'] ?? [];
     String imageUrl = images.isNotEmpty ? images[0] : '';
 
-    return Card(
-      elevation: 2,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
-      child: Column(
+    return GestureDetector(
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => ItemDetailsScreen(listingId: listingId),
+          ),
+        );
+      },
+      child: Card(
+        elevation: 2,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+        child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // Image
@@ -299,7 +310,6 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
           ),
         ],
-      ),
-    );
+      ),    ),    );
   }
 }
