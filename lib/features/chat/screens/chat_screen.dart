@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import '../../../core/models/chat_message.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'conversation_screen.dart';
 
 class ChatScreen extends StatefulWidget {
@@ -10,16 +11,9 @@ class ChatScreen extends StatefulWidget {
 }
 
 class _ChatScreenState extends State<ChatScreen> {
-  final List<ChatMessage> _messages = getDummyChatMessages();
+  final FirebaseFirestore firestore = FirebaseFirestore.instance;
+  final FirebaseAuth auth = FirebaseAuth.instance;
   String _searchQuery = '';
-
-  List<ChatMessage> get _filteredMessages {
-    if (_searchQuery.isEmpty) return _messages;
-    return _messages.where((msg) {
-      return msg.userName.toLowerCase().contains(_searchQuery.toLowerCase()) ||
-          msg.lastMessage.toLowerCase().contains(_searchQuery.toLowerCase());
-    }).toList();
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -68,19 +62,40 @@ class _ChatScreenState extends State<ChatScreen> {
             
             // Conversations List
             Expanded(
-              child: _filteredMessages.isEmpty
-                  ? const Center(
+              child: StreamBuilder<QuerySnapshot>(
+                stream: firestore
+                    .collection('chats')
+                    .where('participants', arrayContains: auth.currentUser!.uid)
+                    .snapshots(),
+                builder: (context, snapshot) {
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    return const Center(child: CircularProgressIndicator());
+                  }
+
+                  if (snapshot.hasError) {
+                    return const Center(child: Text('Error loading chats'));
+                  }
+
+                  if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+                    return const Center(
                       child: Text(
-                        'No conversations found',
+                        'No conversations yet',
                         style: TextStyle(color: Colors.grey),
                       ),
-                    )
-                  : ListView.builder(
-                      itemCount: _filteredMessages.length,
-                      itemBuilder: (context, index) {
-                        return _buildConversationTile(_filteredMessages[index]);
-                      },
-                    ),
+                    );
+                  }
+
+                  List<DocumentSnapshot> chats = snapshot.data!.docs;
+
+                  return ListView.builder(
+                    itemCount: chats.length,
+                    itemBuilder: (context, index) {
+                      Map<String, dynamic> chatData = chats[index].data() as Map<String, dynamic>;
+                      return _buildConversationTile(chatData, chats[index].id);
+                    },
+                  );
+                },
+              ),
             ),
           ],
         ),
@@ -88,7 +103,14 @@ class _ChatScreenState extends State<ChatScreen> {
     );
   }
 
-  Widget _buildConversationTile(ChatMessage message) {
+  Widget _buildConversationTile(Map<String, dynamic> chatData, String chatId) {
+    String otherUserName = chatData['otherUserName'] ?? 'User';
+    String otherUserInitial = otherUserName.isNotEmpty ? otherUserName[0].toUpperCase() : 'U';
+    String listingId = chatData['listingId'] ?? '';
+    String productName = chatData['productName'] ?? 'Product';
+    double productPrice = (chatData['productPrice'] ?? 0).toDouble();
+    String productImage = chatData['productImage'] ?? '';
+
     return Material(
       color: Colors.white,
       child: InkWell(
@@ -97,10 +119,13 @@ class _ChatScreenState extends State<ChatScreen> {
             context,
             MaterialPageRoute(
               builder: (context) => ConversationScreen(
-                chatId: 'chat_${message.initial}',
-                userName: message.userName,
-                userInitial: message.initial,
-                productImage: 'book',
+                chatId: chatId,
+                userName: otherUserName,
+                userInitial: otherUserInitial,
+                listingId: listingId,
+                productName: productName,
+                productPrice: productPrice,
+                productImage: productImage,
               ),
             ),
           );
@@ -111,48 +136,18 @@ class _ChatScreenState extends State<ChatScreen> {
           padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 12.0),
           child: Row(
             children: [
-              // Avatar with badge
-              Stack(
-                children: [
-                  CircleAvatar(
-                    radius: 30,
-                    backgroundColor: _getAvatarColor(message.initial),
-                    child: Text(
-                      message.initial,
-                      style: const TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white,
-                      ),
-                    ),
+              // Avatar
+              CircleAvatar(
+                radius: 30,
+                backgroundColor: _getAvatarColor(otherUserInitial),
+                child: Text(
+                  otherUserInitial,
+                  style: const TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
                   ),
-                  if (message.unreadCount > 0)
-                    Positioned(
-                      right: 0,
-                      top: 0,
-                      child: Container(
-                        padding: const EdgeInsets.all(4),
-                        decoration: const BoxDecoration(
-                          color: Color(0xFFD4A017),
-                          shape: BoxShape.circle,
-                        ),
-                        constraints: const BoxConstraints(
-                          minWidth: 20,
-                          minHeight: 20,
-                        ),
-                        child: Center(
-                          child: Text(
-                            '${message.unreadCount}',
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 11,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-                ],
+                ),
               ),
               const SizedBox(width: 15),
               
@@ -161,48 +156,17 @@ class _ChatScreenState extends State<ChatScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Expanded(
-                          child: Text(
-                            message.userName,
-                            style: TextStyle(
-                              fontSize: 16,
-                              fontWeight: message.unreadCount > 0
-                                  ? FontWeight.bold
-                                  : FontWeight.w600,
-                            ),
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ),
-                        Text(
-                          message.timeAgo,
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: Colors.grey[600],
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 4),
                     Text(
-                      message.lastMessage,
-                      style: TextStyle(
-                        fontSize: 14,
-                        color: message.unreadCount > 0
-                            ? Colors.black87
-                            : Colors.grey[600],
-                        fontWeight: message.unreadCount > 0
-                            ? FontWeight.w500
-                            : FontWeight.normal,
+                      otherUserName,
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
                       ),
-                      maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      message.productName,
+                      productName,
                       style: TextStyle(
                         fontSize: 12,
                         color: Colors.grey[500],
@@ -218,7 +182,8 @@ class _ChatScreenState extends State<ChatScreen> {
           ),
         ),
       ),
-    );  }
+    );
+  }
 
   // Generate different colors based on initial
   Color _getAvatarColor(String initial) {

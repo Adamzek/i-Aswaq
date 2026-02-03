@@ -1,11 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import '../../listing/screens/item_details_screen.dart';
 
 class ConversationScreen extends StatefulWidget {
   final String chatId;
   final String userName;
   final String userInitial;
+  final String listingId;
+  final String productName;
+  final double productPrice;
   final String productImage;
 
   const ConversationScreen({
@@ -13,6 +17,9 @@ class ConversationScreen extends StatefulWidget {
     required this.chatId,
     required this.userName,
     required this.userInitial,
+    required this.listingId,
+    required this.productName,
+    required this.productPrice,
     required this.productImage,
   });
 
@@ -101,20 +108,7 @@ class _ConversationScreenState extends State<ConversationScreen> {
             ),
           ],
         ),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.phone, color: Colors.black),
-            onPressed: () {
-              // TODO: Implement call functionality
-            },
-          ),
-          IconButton(
-            icon: const Icon(Icons.more_vert, color: Colors.black),
-            onPressed: () {
-              // TODO: Implement more options
-            },
-          ),
-        ],
+
       ),
       body: Column(
         children: [
@@ -131,41 +125,54 @@ class _ConversationScreenState extends State<ConversationScreen> {
               children: [
                 ClipRRect(
                   borderRadius: BorderRadius.circular(8),
-                  child: Image.asset(
-                    'assets/chat_screen/${widget.productImage}.jpg',
-                    width: 60,
-                    height: 60,
-                    fit: BoxFit.cover,
-                    errorBuilder: (context, error, stackTrace) {
-                      return Container(
-                        width: 60,
-                        height: 60,
-                        color: Colors.grey[300],
-                        child: Icon(
-                          Icons.image_not_supported,
-                          color: Colors.grey[600],
-                          size: 30,
+                  child: widget.productImage.isNotEmpty
+                      ? Image.network(
+                          widget.productImage,
+                          width: 60,
+                          height: 60,
+                          fit: BoxFit.cover,
+                          errorBuilder: (context, error, stackTrace) {
+                            return Container(
+                              width: 60,
+                              height: 60,
+                              color: Colors.grey[300],
+                              child: Icon(
+                                Icons.image_not_supported,
+                                color: Colors.grey[600],
+                                size: 30,
+                              ),
+                            );
+                          },
+                        )
+                      : Container(
+                          width: 60,
+                          height: 60,
+                          color: Colors.grey[300],
+                          child: Icon(
+                            Icons.image,
+                            color: Colors.grey[600],
+                            size: 30,
+                          ),
                         ),
-                      );
-                    },
-                  ),
                 ),
                 const SizedBox(width: 12),
-                const Expanded(
+                Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Product Item',
-                        style: TextStyle(
+                        widget.productName,
+                        style: const TextStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.w600,
                         ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                       ),
-                      SizedBox(height: 4),
+                      const SizedBox(height: 4),
                       Text(
-                        'RM 250',
-                        style: TextStyle(
+                        'RM ${widget.productPrice.toStringAsFixed(2)}',
+                        style: const TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.bold,
                           color: Color(0xFFD4A017),
@@ -176,7 +183,14 @@ class _ConversationScreenState extends State<ConversationScreen> {
                 ),
                 TextButton(
                   onPressed: () {
-                    // TODO: View product details
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => ItemDetailsScreen(
+                          listingId: widget.listingId,
+                        ),
+                      ),
+                    );
                   },
                   child: const Text(
                     'View',
@@ -250,7 +264,7 @@ class _ConversationScreenState extends State<ConversationScreen> {
 
           // Message input
           Container(
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
             decoration: BoxDecoration(
               color: Colors.white,
               boxShadow: [
@@ -263,12 +277,6 @@ class _ConversationScreenState extends State<ConversationScreen> {
             ),
             child: Row(
               children: [
-                IconButton(
-                  icon: const Icon(Icons.image, color: Color(0xFFD4A017)),
-                  onPressed: () {
-                    // TODO: Implement image picker
-                  },
-                ),
                 Expanded(
                   child: Container(
                     padding: const EdgeInsets.symmetric(horizontal: 16),

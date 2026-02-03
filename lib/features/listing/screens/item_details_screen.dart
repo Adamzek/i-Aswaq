@@ -26,9 +26,27 @@ class _ItemDetailsScreenState extends State<ItemDetailsScreen> {
     });
   }
 
-  void _chatWithSeller(String sellerId, String sellerName) {
+  void _chatWithSeller(
+    String sellerId,
+    String sellerName,
+    String listingId,
+    String productName,
+    double productPrice,
+    String productImage,
+  ) async {
     String currentUserId = auth.currentUser!.uid;
     String chatId = 'chat_${currentUserId}_$sellerId';
+
+    // Create or update chat document
+    await firestore.collection('chats').doc(chatId).set({
+      'participants': [currentUserId, sellerId],
+      'listingId': listingId,
+      'productName': productName,
+      'productPrice': productPrice,
+      'productImage': productImage,
+      'otherUserName': sellerName,
+      'createdAt': FieldValue.serverTimestamp(),
+    }, SetOptions(merge: true));
 
     Navigator.push(
       context,
@@ -37,7 +55,10 @@ class _ItemDetailsScreenState extends State<ItemDetailsScreen> {
           chatId: chatId,
           userName: sellerName,
           userInitial: sellerName.isNotEmpty ? sellerName[0].toUpperCase() : 'S',
-          productImage: 'book',
+          listingId: listingId,
+          productName: productName,
+          productPrice: productPrice,
+          productImage: productImage,
         ),
       ),
     );
@@ -332,7 +353,14 @@ class _ItemDetailsScreenState extends State<ItemDetailsScreen> {
                     width: double.infinity,
                     height: 50,
                     child: ElevatedButton(
-                      onPressed: () => _chatWithSeller(userId, seller),
+                      onPressed: () => _chatWithSeller(
+                        userId,
+                        seller,
+                        widget.listingId,
+                        title,
+                        price,
+                        imageUrl,
+                      ),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: const Color(0xFFD4A017),
                         shape: RoundedRectangleBorder(
