@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
-import 'home_screen.dart';
-import 'add_item_screen.dart';
-import 'chat_screen.dart';
-import 'profile_screen.dart';
-import 'categories_screen.dart';
+import '../features/home/screens/home_screen.dart';
+import '../features/listing/screens/add_listing_screen.dart';
+import '../features/chat/screens/chat_screen.dart';
+import '../features/profile/screens/profile_screen.dart';
+import '../features/categories/screens/categories_screen.dart';
 
 class MainNavigation extends StatefulWidget {
   const MainNavigation({super.key});
@@ -15,7 +15,7 @@ class MainNavigation extends StatefulWidget {
 class _MainNavigationState extends State<MainNavigation> {
   int _selectedIndex = 0;
 
-  // Screens for each navigation item
+  // Screens for each screens in nav
   final List<Widget> _screens = [
     const HomeScreen(),
     const CategoriesScreen(),
@@ -33,7 +33,7 @@ class _MainNavigationState extends State<MainNavigation> {
       // The center "+" button
       floatingActionButton: FloatingActionButton(
         onPressed: () {
-          // Navigates to the Add Item Screen
+          // Navigates to add item screen
           Navigator.push(
             context,
             MaterialPageRoute(builder: (context) => const AddItemPage()),
@@ -46,7 +46,7 @@ class _MainNavigationState extends State<MainNavigation> {
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
       
-      // The bottom bar with custom notch
+      // The bottom bar 
       bottomNavigationBar: BottomAppBar(
         shape: const CircularNotchedRectangle(),
         notchMargin: 8.0,
@@ -71,8 +71,8 @@ class _MainNavigationState extends State<MainNavigation> {
   Widget _buildNavItem(IconData inactiveIcon, IconData activeIcon, String label, int index) {
     bool isSelected = _selectedIndex == index;
     
-    // Define colors based on your specific requirements
-    final Color activeColor = const Color(0xFFD4A017); // Brand Yellow
+    // active vs inactive colours
+    final Color activeColor = const Color(0xFFD4A017); // active Yellow
     final Color inactiveColor = Colors.black;          // Default Black
 
     return GestureDetector(
@@ -84,7 +84,7 @@ class _MainNavigationState extends State<MainNavigation> {
         children: [
           Icon(
             isSelected ? activeIcon : inactiveIcon,
-            color: isSelected ? activeColor : inactiveColor, // This fixes the transparency
+            color: isSelected ? activeColor : inactiveColor, // icon colour
             size: 26,
           ),
           const SizedBox(height: 4),
