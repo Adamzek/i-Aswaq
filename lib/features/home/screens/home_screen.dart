@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../../core/models/product.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -10,35 +10,56 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   String _selectedCategory = 'All';
-  final List<Product> _allProducts = getDummyProducts();
-
-  List<Product> get _filteredProducts {
-    if (_selectedCategory == 'All') return _allProducts;
-    return _allProducts.where((p) => p.category == _selectedCategory).toList();
-  }
+  final FirebaseFirestore firestore = FirebaseFirestore.instance;
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.grey[100],
       body: SafeArea(
-        child: SingleChildScrollView(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // 1. HEADER SECTION (Logo, Notification, Search)
-              _buildHeader(context),
+        child: Column(
+          children: [
+            // 1. HEADER SECTION (Logo, Notification, Search)
+            _buildHeader(context),
 
-              // 2. CATEGORY CHIPS
-              _buildCategoryList(),
+            // 2. CATEGORY CHIPS
+            _buildCategoryList(),
 
-              // 3. FEATURED ITEMS SECTION
-              _buildSectionHeader(context),
+            // 3. FEATURED ITEMS SECTION
+            _buildSectionHeader(context),
 
-              // 4. GRID OF ITEMS
-              _buildProductGrid(context),
-            ],
-          ),
+            // 4. GRID OF ITEMS WITH STREAMBUILDER
+            Expanded(
+              child: StreamBuilder<QuerySnapshot>(
+                stream: firestore.collection('listings').snapshots(),
+                builder: (context, snapshot) {
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    return const Center(child: CircularProgressIndicator());
+                  }
+
+                  if (snapshot.hasError) {
+                    return const Center(child: Text('Error loading listings'));
+                  }
+
+                  if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+                    return const Center(child: Text('No listings available'));
+                  }
+
+                  List<DocumentSnapshot> allDocs = snapshot.data!.docs;
+                  List<DocumentSnapshot> filteredDocs = allDocs;
+
+                  if (_selectedCategory != 'All') {
+                    filteredDocs = allDocs.where((doc) {
+                      Map<String, dynamic> data = doc.data() as Map<String, dynamic>;
+                      return data['category'] == _selectedCategory;
+                    }).toList();
+                  }
+
+                  return _buildProductGrid(context, filteredDocs);
+                },
+              ),
+            ),
+          ],
         ),
       ),
     );
@@ -149,14 +170,12 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _buildProductGrid(BuildContext context) {
+  Widget _buildProductGrid(BuildContext context, List<DocumentSnapshot> docs) {
     final screenWidth = MediaQuery.of(context).size.width;
     final crossAxisCount = screenWidth > 600 ? 3 : 2;
     final horizontalPadding = screenWidth * 0.04;
 
     return GridView.builder(
-      shrinkWrap: true, // Allows GridView to work inside SingleChildScrollView
-      physics: const NeverScrollableScrollPhysics(),
       padding: EdgeInsets.symmetric(horizontal: horizontalPadding),
       gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
         crossAxisCount: crossAxisCount,
@@ -164,21 +183,29 @@ class _HomeScreenState extends State<HomeScreen> {
         crossAxisSpacing: 12,
         mainAxisSpacing: 12,
       ),
-      itemCount: _filteredProducts.length,
+      itemCount: docs.length,
       itemBuilder: (context, index) {
-        return _buildProductCard(_filteredProducts[index]);
+        Map<String, dynamic> data = docs[index].data() as Map<String, dynamic>;
+        return _buildProductCard(data);
       },
     );
   }
 
-  Widget _buildProductCard(Product product) {
+  Widget _buildProductCard(Map<String, dynamic> data) {
+    String title = data['title'] ?? 'No Title';
+    double price = (data['price'] ?? 0).toDouble();
+    String seller = data['seller'] ?? 'Unknown';
+    String condition = data['condition'] ?? 'Used';
+    List<dynamic> images = data['images'] ?? [];
+    String imageUrl = images.isNotEmpty ? images[0] : '';
+
     return Card(
       elevation: 2,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Image Placeholder
+          // Image
           Expanded(
             child: Container(
               decoration: BoxDecoration(
@@ -187,9 +214,25 @@ class _HomeScreenState extends State<HomeScreen> {
                   top: Radius.circular(15),
                 ),
               ),
-              child: Center(
-                child: Icon(Icons.image, color: Colors.grey[600]),
-              ),
+              child: imageUrl.isNotEmpty
+                  ? ClipRRect(
+                      borderRadius: const BorderRadius.vertical(
+                        top: Radius.circular(15),
+                      ),
+                      child: Image.network(
+                        imageUrl,
+                        fit: BoxFit.cover,
+                        width: double.infinity,
+                        errorBuilder: (context, error, stackTrace) {
+                          return Center(
+                            child: Icon(Icons.image, color: Colors.grey[600]),
+                          );
+                        },
+                      ),
+                    )
+                  : Center(
+                      child: Icon(Icons.image, color: Colors.grey[600]),
+                    ),
             ),
           ),
           Padding(
@@ -198,7 +241,7 @@ class _HomeScreenState extends State<HomeScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  product.name,
+                  title,
                   style: const TextStyle(
                     fontWeight: FontWeight.bold,
                     fontSize: 14,
@@ -208,7 +251,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  'RM ${product.price.toStringAsFixed(2)}',
+                  'RM ${price.toStringAsFixed(2)}',
                   style: const TextStyle(
                     color: Color(0xFFD4A017),
                     fontWeight: FontWeight.bold,
@@ -220,7 +263,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   children: [
                     Expanded(
                       child: Text(
-                        product.seller,
+                        seller,
                         style: TextStyle(
                           color: Colors.grey[600],
                           fontSize: 11,
@@ -234,16 +277,16 @@ class _HomeScreenState extends State<HomeScreen> {
                         vertical: 2,
                       ),
                       decoration: BoxDecoration(
-                        color: product.condition == 'New'
+                        color: condition == 'New'
                             ? Colors.green[50]
                             : Colors.blue[50],
                         borderRadius: BorderRadius.circular(4),
                       ),
                       child: Text(
-                        product.condition,
+                        condition,
                         style: TextStyle(
                           fontSize: 10,
-                          color: product.condition == 'New'
+                          color: condition == 'New'
                               ? Colors.green[700]
                               : Colors.blue[700],
                           fontWeight: FontWeight.bold,

@@ -1,7 +1,10 @@
 import 'dart:io'; 
 import 'package:flutter/foundation.dart'; 
 import 'package:flutter/material.dart';
-import 'package:image_picker/image_picker.dart'; 
+import 'package:image_picker/image_picker.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import '../../../core/services/firestore_service.dart';
+import '../../../core/services/storage_service.dart';
 
 class AddItemPage extends StatefulWidget {
   const AddItemPage({Key? key}) : super(key: key);
@@ -15,12 +18,17 @@ class _AddItemPageState extends State<AddItemPage> {
   final _formKey = GlobalKey<FormState>();
   int _currentStep = 0; 
 
+  final FirestoreService _firestoreService = FirestoreService();
+  final StorageService _storageService = StorageService();
+  final FirebaseAuth _auth = FirebaseAuth.instance;
+
   final TextEditingController _titleController = TextEditingController();
   final TextEditingController _descController = TextEditingController();
   final TextEditingController _priceController = TextEditingController();
   
   String _selectedCondition = "Used"; 
   String _selectedCategory = "";
+  bool _isLoading = false;
   
   List<XFile> _selectedImages = []; 
   final ImagePicker _picker = ImagePicker();
@@ -121,10 +129,67 @@ class _AddItemPageState extends State<AddItemPage> {
       );
       setState(() => _currentStep++);
     } else {
+      _publishListing();
+    }
+  }
+
+  Future<void> _publishListing() async {
+    setState(() {
+      _isLoading = true;
+    });
+
+    try {
+      User? currentUser = _auth.currentUser;
+      if (currentUser == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('You must be logged in to publish')),
+        );
+        setState(() {
+          _isLoading = false;
+        });
+        return;
+      }
+
+      String listingId = DateTime.now().millisecondsSinceEpoch.toString();
+
+      List<String> imageUrls = [];
+      for (XFile image in _selectedImages) {
+        File imageFile = File(image.path);
+        String? url = await _storageService.uploadItemImage(listingId, imageFile);
+        if (url != null) {
+          imageUrls.add(url);
+        }
+      }
+
+      Map<String, dynamic> listingData = {
+        'title': _titleController.text.trim(),
+        'description': _descController.text.trim(),
+        'price': double.parse(_priceController.text.trim()),
+        'category': _selectedCategory,
+        'condition': _selectedCondition,
+        'images': imageUrls,
+        'seller': currentUser.email ?? 'Unknown',
+        'userId': currentUser.uid,
+        'createdAt': DateTime.now().toIso8601String(),
+      };
+
+      await _firestoreService.addListing(listingData);
+
+      setState(() {
+        _isLoading = false;
+      });
+
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Listing published successfully!')),
       );
-      Navigator.pop(context); 
+      Navigator.pop(context);
+    } catch (e) {
+      setState(() {
+        _isLoading = false;
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error publishing listing: $e')),
+      );
     }
   }
 
@@ -209,7 +274,7 @@ class _AddItemPageState extends State<AddItemPage> {
               width: double.infinity,
               height: 50,
               child: ElevatedButton(
-                onPressed: _nextStep,
+                onPressed: _isLoading ? null : _nextStep,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: kGoldColor,
                   shape: RoundedRectangleBorder(
@@ -217,11 +282,13 @@ class _AddItemPageState extends State<AddItemPage> {
                   ),
                   elevation: 5,
                 ),
-                child: Text(
-                  _currentStep == 2 ? "Publish Listing" : "Continue",
-                  style: const TextStyle(
-                      fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white),
-                ),
+                child: _isLoading
+                    ? const CircularProgressIndicator(color: Colors.white)
+                    : Text(
+                        _currentStep == 2 ? "Publish Listing" : "Continue",
+                        style: const TextStyle(
+                            fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white),
+                      ),
               ),
             ),
             if (_currentStep == 2) ...[
