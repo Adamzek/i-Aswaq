@@ -12,6 +12,7 @@ class AddItemPage extends StatefulWidget {
 
 class _AddItemPageState extends State<AddItemPage> {
   final PageController _pageController = PageController();
+  final _formKey = GlobalKey<FormState>();
   int _currentStep = 0; 
 
   final TextEditingController _titleController = TextEditingController();
@@ -64,7 +65,55 @@ class _AddItemPageState extends State<AddItemPage> {
     });
   }
 
+  bool _validateStep() {
+    if (_currentStep == 0) {
+      if (_selectedImages.isEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Please add at least one photo')),
+        );
+        return false;
+      }
+      return true;
+    } else if (_currentStep == 1) {
+      if (_titleController.text.trim().isEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Please enter a title')),
+        );
+        return false;
+      }
+      if (_descController.text.trim().isEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Please enter a description')),
+        );
+        return false;
+      }
+      if (_selectedCategory.isEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Please select a category')),
+        );
+        return false;
+      }
+      if (_priceController.text.trim().isEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Please enter a price')),
+        );
+        return false;
+      }
+      final price = double.tryParse(_priceController.text);
+      if (price == null || price <= 0) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Please enter a valid price')),
+        );
+        return false;
+      }
+      return true;
+    }
+    return true;
+  }
+
   void _nextStep() {
+    if (!_validateStep()) return;
+
     if (_currentStep < 2) {
       _pageController.nextPage(
         duration: const Duration(milliseconds: 300),
@@ -72,7 +121,9 @@ class _AddItemPageState extends State<AddItemPage> {
       );
       setState(() => _currentStep++);
     } else {
-      print("Publishing Item: ${_titleController.text}");
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Listing published successfully!')),
+      );
       Navigator.pop(context); 
     }
   }

@@ -32,12 +32,12 @@ class _MainNavigationState extends State<MainNavigation> {
       ),
       // The center "+" button
       floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          // Navigates to add item screen
-          Navigator.push(
+        onPressed: () async {
+          await Navigator.push(
             context,
             MaterialPageRoute(builder: (context) => const AddItemPage()),
           );
+          setState(() {});
         }, 
         backgroundColor: const Color(0xFFD4A017),
         elevation: 4.0,

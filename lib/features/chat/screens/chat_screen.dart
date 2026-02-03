@@ -1,10 +1,29 @@
 import 'package:flutter/material.dart';
+import '../../../core/models/chat_message.dart';
 
-class ChatScreen extends StatelessWidget {
+class ChatScreen extends StatefulWidget {
   const ChatScreen({super.key});
 
   @override
+  State<ChatScreen> createState() => _ChatScreenState();
+}
+
+class _ChatScreenState extends State<ChatScreen> {
+  final List<ChatMessage> _messages = getDummyChatMessages();
+  String _searchQuery = '';
+
+  List<ChatMessage> get _filteredMessages {
+    if (_searchQuery.isEmpty) return _messages;
+    return _messages.where((msg) {
+      return msg.userName.toLowerCase().contains(_searchQuery.toLowerCase()) ||
+          msg.lastMessage.toLowerCase().contains(_searchQuery.toLowerCase());
+    }).toList();
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final screenWidth = MediaQuery.of(context).size.width;
+
     return Scaffold(
       backgroundColor: Colors.white,
       body: SafeArea(
@@ -12,9 +31,9 @@ class ChatScreen extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // Header
-            const Padding(
-              padding: EdgeInsets.all(20.0),
-              child: Text(
+            Padding(
+              padding: EdgeInsets.all(screenWidth * 0.05),
+              child: const Text(
                 'Messages',
                 style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
               ),
@@ -22,15 +41,20 @@ class ChatScreen extends StatelessWidget {
             
             // Search Bar
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20.0),
+              padding: EdgeInsets.symmetric(horizontal: screenWidth * 0.05),
               child: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 15),
                 decoration: BoxDecoration(
                   color: const Color(0xFFF5F5F5),
                   borderRadius: BorderRadius.circular(10),
                 ),
-                child: const TextField(
-                  decoration: InputDecoration(
+                child: TextField(
+                  onChanged: (value) {
+                    setState(() {
+                      _searchQuery = value;
+                    });
+                  },
+                  decoration: const InputDecoration(
                     icon: Icon(Icons.search, color: Colors.grey),
                     hintText: 'Search conversations...',
                     hintStyle: TextStyle(color: Colors.grey),
@@ -43,65 +67,19 @@ class ChatScreen extends StatelessWidget {
             
             // Conversations List
             Expanded(
-              child: ListView(
-                children: [ // adjust the actual conversation data respectively
-                  _buildConversationTile(
-                    initial: 'A',
-                    name: 'Ahmad Faisal',
-                    message: 'Is the MacBook still available?',
-                    time: '2m ago',
-                    unreadCount: 2,
-                    productImage: 'macbook',
-                    onTap: () {
-                      // TODO: Navigate to chat conversation screen
-                    },
-                  ),
-                  _buildConversationTile(
-                    initial: 'N',
-                    name: 'Nurul Izzah',
-                    message: 'Can we meet tomorrow at KENMS?',
-                    time: '1h ago',
-                    unreadCount: 0,
-                    productImage: 'book',
-                    onTap: () {
-                      // TODO: Navigate to chat conversation screen
-                    },
-                  ),
-                  _buildConversationTile(
-                    initial: 'M',
-                    name: 'Muhammad Hafiz',
-                    message: 'Thanks! The book is in great condition 👍',
-                    time: '3h ago',
-                    unreadCount: 0,
-                    productImage: 'book',
-                    onTap: () {
-                      // TODO: Navigate to chat conversation screen
-                    },
-                  ),
-                  _buildConversationTile(
-                    initial: 'S',
-                    name: 'Siti Aminah',
-                    message: 'I can do RM250 for the desk',
-                    time: '1d ago',
-                    unreadCount: 1,
-                    productImage: 'table',
-                    onTap: () {
-                      // TODO: Navigate to chat conversation screen
-                    },
-                  ),
-                  _buildConversationTile(
-                    initial: 'I',
-                    name: 'Ismail Rahman',
-                    message: 'Deal! When can you deliver?',
-                    time: '2d ago',
-                    unreadCount: 0,
-                    productImage: 'headphone',
-                    onTap: () {
-                      // TODO: Navigate to chat conversation screen
-                    },
-                  ),
-                ],
-              ),
+              child: _filteredMessages.isEmpty
+                  ? const Center(
+                      child: Text(
+                        'No conversations found',
+                        style: TextStyle(color: Colors.grey),
+                      ),
+                    )
+                  : ListView.builder(
+                      itemCount: _filteredMessages.length,
+                      itemBuilder: (context, index) {
+                        return _buildConversationTile(_filteredMessages[index]);
+                      },
+                    ),
             ),
           ],
         ),
@@ -109,19 +87,12 @@ class ChatScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildConversationTile({
-    required String initial,
-    required String name,
-    required String message,
-    required String time,
-    required int unreadCount,
-    required String productImage,
-    required VoidCallback onTap,
-  }) {
+  Widget _buildConversationTile(ChatMessage message) {
     return Material(
       color: Colors.white,
       child: InkWell(
-        onTap: onTap,
+        onTap: () {
+        },
         splashColor: Colors.grey.withValues(alpha: 0.2),
         highlightColor: Colors.grey.withValues(alpha: 0.1),
         child: Padding(
@@ -133,9 +104,9 @@ class ChatScreen extends StatelessWidget {
                 children: [
                   CircleAvatar(
                     radius: 30,
-                    backgroundColor: _getAvatarColor(initial),
+                    backgroundColor: _getAvatarColor(message.initial),
                     child: Text(
-                      initial,
+                      message.initial,
                       style: const TextStyle(
                         fontSize: 20,
                         fontWeight: FontWeight.bold,
@@ -143,7 +114,7 @@ class ChatScreen extends StatelessWidget {
                       ),
                     ),
                   ),
-                  if (unreadCount > 0)
+                  if (message.unreadCount > 0)
                     Positioned(
                       right: 0,
                       top: 0,
@@ -159,7 +130,7 @@ class ChatScreen extends StatelessWidget {
                         ),
                         child: Center(
                           child: Text(
-                            '$unreadCount',
+                            '${message.unreadCount}',
                             style: const TextStyle(
                               color: Colors.white,
                               fontSize: 11,
@@ -181,15 +152,20 @@ class ChatScreen extends StatelessWidget {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Text(
-                          name,
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: unreadCount > 0 ? FontWeight.bold : FontWeight.w600,
+                        Expanded(
+                          child: Text(
+                            message.userName,
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: message.unreadCount > 0
+                                  ? FontWeight.bold
+                                  : FontWeight.w600,
+                            ),
+                            overflow: TextOverflow.ellipsis,
                           ),
                         ),
                         Text(
-                          time,
+                          message.timeAgo,
                           style: TextStyle(
                             fontSize: 12,
                             color: Colors.grey[600],
@@ -199,11 +175,26 @@ class ChatScreen extends StatelessWidget {
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      message,
+                      message.lastMessage,
                       style: TextStyle(
                         fontSize: 14,
-                        color: unreadCount > 0 ? Colors.black87 : Colors.grey[600],
-                        fontWeight: unreadCount > 0 ? FontWeight.w500 : FontWeight.normal,
+                        color: message.unreadCount > 0
+                            ? Colors.black87
+                            : Colors.grey[600],
+                        fontWeight: message.unreadCount > 0
+                            ? FontWeight.w500
+                            : FontWeight.normal,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      message.productName,
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: Colors.grey[500],
+                        fontStyle: FontStyle.italic,
                       ),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
@@ -211,42 +202,14 @@ class ChatScreen extends StatelessWidget {
                   ],
                 ),
               ),
-              const SizedBox(width: 10),
-              
-              // Product image
-              Container(
-                width: 50,
-                height: 50,
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(8),
-                  child: Image.asset(
-                    'assets/chat_screen/$productImage.jpg',
-                    fit: BoxFit.cover,
-                    errorBuilder: (context, error, stackTrace) {
-                      return Container(
-                        color: Colors.grey[200],
-                        child: Icon(
-                          Icons.image_not_supported,
-                          color: Colors.grey[600],
-                          size: 24,
-                        ),
-                      );
-                    },
-                  ),
-                ),
-              ),
             ],
           ),
         ),
       ),
-    );
-  }
-  // change this to an actual avatar picture or link later
+    );  }
+
+  // Generate different colors based on initial
   Color _getAvatarColor(String initial) {
-    // Generate different colors based on initial
     final colors = [
       const Color(0xFFF2D06B),
       const Color(0xFF8B9DC3),
