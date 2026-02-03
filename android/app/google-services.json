@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "459790801779",
+    "project_id": "i-aswaq-399df",
+    "storage_bucket": "i-aswaq-399df.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:459790801779:android:81ead0493abe5b16a48306",
+        "android_client_info": {
+          "package_name": "com.example.i_aswaq"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyB9ZTr8XzAmIjlzwzyKfAq3eGSQbNB-1FM"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
