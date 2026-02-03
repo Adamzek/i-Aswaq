@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import '../../auth/screens/login_screen.dart';
 
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
@@ -7,6 +9,11 @@ class ProfileScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final screenWidth = MediaQuery.of(context).size.width;
     final padding = screenWidth * 0.05;
+
+    User? currentUser = FirebaseAuth.instance.currentUser;
+    String userName = currentUser?.email?.split('@').first ?? 'User';
+    String userEmail = currentUser?.email ?? 'No email';
+    String userInitial = userName.isNotEmpty ? userName[0].toUpperCase() : 'U';
 
     return Scaffold(
       backgroundColor: Colors.white,
@@ -34,7 +41,7 @@ class ProfileScreen extends StatelessWidget {
               const SizedBox(height: 25),
 
               // 2. The User Info Card (Cream colored box)
-              _buildUserInfoCard(screenWidth),
+              _buildUserInfoCard(screenWidth, userName, userEmail, userInitial),
               const SizedBox(height: 25),
 
               // 3. Stats Row (The 3 small cards)
@@ -110,7 +117,13 @@ class ProfileScreen extends StatelessWidget {
               const SizedBox(height: 30),
               Center(
                 child: TextButton.icon(
-                  onPressed: () {
+                  onPressed: () async {
+                    await FirebaseAuth.instance.signOut();
+                    Navigator.pushAndRemoveUntil(
+                      context,
+                      MaterialPageRoute(builder: (context) => const LoginScreen()),
+                      (route) => false,
+                    );
                   },
                   icon: const Icon(Icons.logout, color: Colors.red),
                   label: const Text(
@@ -127,7 +140,7 @@ class ProfileScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildUserInfoCard(double screenWidth) {
+  Widget _buildUserInfoCard(double screenWidth, String userName, String userEmail, String userInitial) {
     return Container(
       padding: EdgeInsets.all(screenWidth * 0.05),
       decoration: BoxDecoration(
@@ -138,31 +151,31 @@ class ProfileScreen extends StatelessWidget {
         children: [
           Row(
             children: [
-              // The 'A' Avatar
+              // The Avatar with user initial
               CircleAvatar(
                 radius: 40,
                 backgroundColor: const Color(0xFFF2D06B).withValues(alpha: 0.3),
-                child: const Text(
-                  'A',
-                  style: TextStyle(fontSize: 30, color: Color(0xFFD4A017)),
+                child: Text(
+                  userInitial,
+                  style: const TextStyle(fontSize: 30, color: Color(0xFFD4A017)),
                 ),
               ),
               const SizedBox(width: 15),
               // Name and Email
-              const Expanded(
+              Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Ahmad Faisal',
-                      style: TextStyle(
+                      userName,
+                      style: const TextStyle(
                         fontSize: 20,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
                     Text(
-                      'ahmad.faisal@live.iium.edu.my',
-                      style: TextStyle(
+                      userEmail,
+                      style: const TextStyle(
                         color: Colors.grey,
                         fontSize: 13,
                       ),
