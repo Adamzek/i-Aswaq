@@ -426,8 +426,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 itemBuilder: (context, index) {
                   final listing = listings[index].data() as Map<String, dynamic>;
                   final listingId = listings[index].id;
-                  final name = listing['name'] ?? 'No Name';
-                  final price = listing['price'] ?? 0.0;
+                  final title = listing['title'] ?? 'No Title';
+                  final price = (listing['price'] ?? 0).toDouble();
                   final images = listing['images'] as List<dynamic>? ?? [];
                   final imageUrl = images.isNotEmpty ? images[0] : '';
 
@@ -457,26 +457,81 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          ClipRRect(
-                            borderRadius: const BorderRadius.vertical(
-                              top: Radius.circular(12),
-                            ),
-                            child: imageUrl.isNotEmpty
-                                ? Image.network(
-                                    imageUrl,
-                                    height: 120,
-                                    width: double.infinity,
-                                    fit: BoxFit.cover,
-                                  )
-                                : Container(
-                                    height: 120,
-                                    color: Colors.grey[300],
-                                    child: const Icon(
-                                      Icons.image,
-                                      size: 50,
-                                      color: Colors.grey,
+                          Stack(
+                            children: [
+                              ClipRRect(
+                                borderRadius: const BorderRadius.vertical(
+                                  top: Radius.circular(12),
+                                ),
+                                child: imageUrl.isNotEmpty
+                                    ? Image.network(
+                                        imageUrl,
+                                        height: 120,
+                                        width: double.infinity,
+                                        fit: BoxFit.cover,
+                                      )
+                                    : Container(
+                                        height: 120,
+                                        color: Colors.grey[300],
+                                        child: const Icon(
+                                          Icons.image,
+                                          size: 50,
+                                          color: Colors.grey,
+                                        ),
+                                      ),
+                              ),
+                              Positioned(
+                                top: 8,
+                                right: 8,
+                                child: Row(
+                                  children: [
+                                    Container(
+                                      decoration: BoxDecoration(
+                                        color: Colors.white,
+                                        shape: BoxShape.circle,
+                                        boxShadow: [
+                                          BoxShadow(
+                                            color: Colors.black.withValues(alpha: 0.2),
+                                            blurRadius: 4,
+                                          ),
+                                        ],
+                                      ),
+                                      child: IconButton(
+                                        icon: const Icon(Icons.edit, size: 18),
+                                        color: const Color(0xFFD4A017),
+                                        padding: const EdgeInsets.all(8),
+                                        constraints: const BoxConstraints(),
+                                        onPressed: () {
+                                          _showEditDialog(listingId, title, price);
+                                        },
+                                      ),
                                     ),
-                                  ),
+                                    const SizedBox(width: 4),
+                                    Container(
+                                      decoration: BoxDecoration(
+                                        color: Colors.white,
+                                        shape: BoxShape.circle,
+                                        boxShadow: [
+                                          BoxShadow(
+                                            color: Colors.black.withValues(alpha: 0.2),
+                                            blurRadius: 4,
+                                          ),
+                                        ],
+                                      ),
+                                      child: IconButton(
+                                        icon: const Icon(Icons.delete, size: 18),
+                                        color: Colors.red,
+                                        padding: const EdgeInsets.all(8),
+                                        constraints: const BoxConstraints(),
+                                        onPressed: () {
+                                          _showDeleteDialog(listingId, title);
+                                        },
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
                           ),
                           Padding(
                             padding: const EdgeInsets.all(8.0),
@@ -484,7 +539,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(
-                                  name,
+                                  title,
                                   style: const TextStyle(
                                     fontWeight: FontWeight.bold,
                                     fontSize: 14,
@@ -515,6 +570,108 @@ class _ProfileScreenState extends State<ProfileScreen> {
         ),
       ),
     ).then((_) => _loadCounts());
+  }
+
+  void _showDeleteDialog(String listingId, String title) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Delete Listing'),
+        content: Text('Are you sure you want to delete "$title"?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () async {
+              Navigator.pop(context);
+              await _firestore.collection('listings').doc(listingId).delete();
+              _loadCounts();
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Listing deleted successfully')),
+              );
+            },
+            child: const Text(
+              'Delete',
+              style: TextStyle(color: Colors.red),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showEditDialog(String listingId, String currentTitle, double currentPrice) {
+    final titleController = TextEditingController(text: currentTitle);
+    final priceController = TextEditingController(text: currentPrice.toString());
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Edit Listing'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextField(
+              controller: titleController,
+              decoration: const InputDecoration(
+                labelText: 'Title',
+                border: OutlineInputBorder(),
+              ),
+            ),
+            const SizedBox(height: 16),
+            TextField(
+              controller: priceController,
+              decoration: const InputDecoration(
+                labelText: 'Price (RM)',
+                border: OutlineInputBorder(),
+              ),
+              keyboardType: TextInputType.number,
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () async {
+              String newTitle = titleController.text.trim();
+              String priceText = priceController.text.trim();
+
+              if (newTitle.isEmpty) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Title cannot be empty')),
+                );
+                return;
+              }
+
+              double? newPrice = double.tryParse(priceText);
+              if (newPrice == null || newPrice <= 0) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Please enter a valid price')),
+                );
+                return;
+              }
+
+              Navigator.pop(context);
+
+              await _firestore.collection('listings').doc(listingId).update({
+                'title': newTitle,
+                'price': newPrice,
+              });
+
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Listing updated successfully')),
+              );
+            },
+            child: const Text('Save'),
+          ),
+        ],
+      ),
+    );
   }
 
   void _showSavedItems() {
