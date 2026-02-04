@@ -11,7 +11,16 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   String _selectedCategory = 'All';
+  String _searchQuery = '';
+  bool _showFilterDialog = false;
   final FirebaseFirestore firestore = FirebaseFirestore.instance;
+  final TextEditingController _searchController = TextEditingController();
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -49,11 +58,33 @@ class _HomeScreenState extends State<HomeScreen> {
                   List<DocumentSnapshot> allDocs = snapshot.data!.docs;
                   List<DocumentSnapshot> filteredDocs = allDocs;
 
+                  // Filter by category
                   if (_selectedCategory != 'All') {
-                    filteredDocs = allDocs.where((doc) {
+                    filteredDocs = filteredDocs.where((doc) {
                       Map<String, dynamic> data = doc.data() as Map<String, dynamic>;
                       return data['category'] == _selectedCategory;
                     }).toList();
+                  }
+
+                  // Filter by search query
+                  if (_searchQuery.isNotEmpty) {
+                    filteredDocs = filteredDocs.where((doc) {
+                      Map<String, dynamic> data = doc.data() as Map<String, dynamic>;
+                      String title = (data['title'] ?? '').toLowerCase();
+                      String description = (data['description'] ?? '').toLowerCase();
+                      String category = (data['category'] ?? '').toLowerCase();
+                      String query = _searchQuery.toLowerCase();
+                      return title.contains(query) || description.contains(query) || category.contains(query);
+                    }).toList();
+                  }
+
+                  if (filteredDocs.isEmpty) {
+                    return const Center(
+                      child: Text(
+                        'No items found',
+                        style: TextStyle(color: Colors.grey),
+                      ),
+                    );
                   }
 
                   return _buildProductGrid(context, filteredDocs);
@@ -90,10 +121,21 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
           SizedBox(height: screenWidth * 0.04),
           TextField(
+            controller: _searchController,
+            onChanged: (value) {
+              setState(() {
+                _searchQuery = value;
+              });
+            },
             decoration: InputDecoration(
               hintText: 'Search items, books, electronics...',
               prefixIcon: const Icon(Icons.search),
-              suffixIcon: const Icon(Icons.tune), // Filter icon
+              suffixIcon: IconButton(
+                icon: const Icon(Icons.tune),
+                onPressed: () {
+                  _showFilterBottomSheet(context);
+                },
+              ),
               filled: true,
               fillColor: Colors.white,
               border: OutlineInputBorder(
@@ -311,5 +353,58 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         ],
       ),    ),    );
+  }
+
+  void _showFilterBottomSheet(BuildContext context) {
+    final categories = ['All', 'Electronics', 'Books', 'Clothing', 'Furniture', 'Sports'];
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) {
+        return Container(
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'Filter by Category',
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: 16),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: categories.map((category) {
+                  final isSelected = _selectedCategory == category;
+                  return ChoiceChip(
+                    label: Text(category),
+                    selected: isSelected,
+                    selectedColor: const Color(0xFFD4A017),
+                    labelStyle: TextStyle(
+                      color: isSelected ? Colors.white : Colors.black,
+                      fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                    ),
+                    backgroundColor: Colors.grey[200],
+                    onSelected: (bool selected) {
+                      setState(() {
+                        _selectedCategory = category;
+                      });
+                      Navigator.pop(context);
+                    },
+                  );
+                }).toList(),
+              ),
+              const SizedBox(height: 16),
+            ],
+          ),
+        );
+      },
+    );
   }
 }

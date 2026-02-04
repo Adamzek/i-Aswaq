@@ -13,6 +13,14 @@ class SavedItemsScreen extends StatefulWidget {
 class _SavedItemsScreenState extends State<SavedItemsScreen> {
   final FirebaseFirestore firestore = FirebaseFirestore.instance;
   final FirebaseAuth auth = FirebaseAuth.instance;
+  String _searchQuery = '';
+  final TextEditingController _searchController = TextEditingController();
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -90,6 +98,12 @@ class _SavedItemsScreenState extends State<SavedItemsScreen> {
           ),
           SizedBox(height: screenWidth * 0.04),
           TextField(
+            controller: _searchController,
+            onChanged: (value) {
+              setState(() {
+                _searchQuery = value;
+              });
+            },
             decoration: InputDecoration(
               hintText: 'Search saved items...',
               prefixIcon: const Icon(Icons.search),
@@ -153,6 +167,19 @@ class _SavedItemsScreenState extends State<SavedItemsScreen> {
             }
 
             Map<String, dynamic> data = listingSnapshot.data!.data() as Map<String, dynamic>;
+            
+            // Apply search filter
+            if (_searchQuery.isNotEmpty) {
+              String title = (data['title'] ?? '').toLowerCase();
+              String description = (data['description'] ?? '').toLowerCase();
+              String category = (data['category'] ?? '').toLowerCase();
+              String query = _searchQuery.toLowerCase();
+              
+              if (!title.contains(query) && !description.contains(query) && !category.contains(query)) {
+                return Container();
+              }
+            }
+            
             return _buildProductCard(data, listingId);
           },
         );
