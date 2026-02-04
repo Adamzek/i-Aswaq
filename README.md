@@ -295,3 +295,4 @@ Figma - https://www.figma.com/design/NAHfUOrQXcoUweKFwgPuNQ/i-aswaq?node-id=3-31
 2. ChatGPT for guides on firebase services - https://chatgpt.com/share/6982924f-7cac-8003-9d2c-db5c29a7f00d
 3. Image_picker package documentation - https://pub.dev/packages/image_picker
 4. Add listing reference - https://shopee.com.my/ || https://www.lazada.com.my/
+5. Gemini for guides on front end development for login and home screens - https://gemini.google.com/share/4783e61f6900
