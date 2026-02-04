@@ -20,10 +20,52 @@ class _ItemDetailsScreenState extends State<ItemDetailsScreen> {
   final FirebaseAuth auth = FirebaseAuth.instance;
   bool isFavorite = false;
 
-  void _toggleFavorite() {
+  @override
+  void initState() {
+    super.initState();
+    _checkIfSaved();
+  }
+
+  void _checkIfSaved() async {
+    final user = auth.currentUser;
+    if (user == null) return;
+
+    final doc = await firestore
+        .collection('users')
+        .doc(user.uid)
+        .collection('savedItems')
+        .doc(widget.listingId)
+        .get();
+
     setState(() {
-      isFavorite = !isFavorite;
+      isFavorite = doc.exists;
     });
+  }
+
+  void _toggleFavorite() async {
+    final user = auth.currentUser;
+    if (user == null) return;
+
+    final savedItemRef = firestore
+        .collection('users')
+        .doc(user.uid)
+        .collection('savedItems')
+        .doc(widget.listingId);
+
+    if (isFavorite) {
+      await savedItemRef.delete();
+      setState(() {
+        isFavorite = false;
+      });
+    } else {
+      await savedItemRef.set({
+        'listingId': widget.listingId,
+        'savedAt': FieldValue.serverTimestamp(),
+      });
+      setState(() {
+        isFavorite = true;
+      });
+    }
   }
 
   void _chatWithSeller(

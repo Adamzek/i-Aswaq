@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'settings_screen.dart';
+import '../../listing/screens/item_details_screen.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -11,14 +13,18 @@ class ProfileScreen extends StatefulWidget {
 
 class _ProfileScreenState extends State<ProfileScreen> {
   final FirebaseAuth _auth = FirebaseAuth.instance;
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   String _userName = 'User';
   String _userEmail = '';
   String? _userInitial;
+  int _myListingsCount = 0;
+  int _savedItemsCount = 0;
 
   @override
   void initState() {
     super.initState();
     _loadUserData();
+    _loadCounts();
   }
 
   void _loadUserData() {
@@ -43,6 +49,29 @@ class _ProfileScreenState extends State<ProfileScreen> {
         _userInitial = _userName.isNotEmpty ? _userName[0].toUpperCase() : 'U';
       });
     }
+  }
+
+  void _loadCounts() async {
+    final user = _auth.currentUser;
+    if (user == null) return;
+
+    // Get my listings count
+    final listingsSnapshot = await _firestore
+        .collection('listings')
+        .where('userId', isEqualTo: user.uid)
+        .get();
+
+    // Get saved items count
+    final savedSnapshot = await _firestore
+        .collection('users')
+        .doc(user.uid)
+        .collection('savedItems')
+        .get();
+
+    setState(() {
+      _myListingsCount = listingsSnapshot.docs.length;
+      _savedItemsCount = savedSnapshot.docs.length;
+    });
   }
 
   @override
@@ -81,6 +110,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       );
                       // Reload user data when returning from settings
                       _loadUserData();
+                      _loadCounts();
                     },
                     icon: const Icon(Icons.settings_outlined),
                   ),
@@ -103,14 +133,18 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   _buildMenuTile(
                     Icons.inventory_2_outlined,
                     'My Listings',
-                    '3',
-                    () {},
+                    _myListingsCount.toString(),
+                    () {
+                      _showMyListings();
+                    },
                   ),
                   _buildMenuTile(
                     Icons.favorite_border,
                     'Saved Items',
-                    '12',
-                    () {},
+                    _savedItemsCount.toString(),
+                    () {
+                      _showSavedItems();
+                    },
                   ),
                   _buildMenuTile(
                     Icons.history,
@@ -188,6 +222,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 );
                 // Reload user data when returning from settings
                 _loadUserData();
+                _loadCounts();
               },
               icon: const Icon(
                 Icons.edit_outlined,
@@ -343,5 +378,300 @@ class _ProfileScreenState extends State<ProfileScreen> {
         ),
       ),
     );
+  }
+
+  void _showMyListings() {
+    final user = _auth.currentUser;
+    if (user == null) return;
+
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => Scaffold(
+          appBar: AppBar(
+            title: const Text('My Listings'),
+            backgroundColor: Colors.white,
+            foregroundColor: Colors.black,
+          ),
+          body: StreamBuilder<QuerySnapshot>(
+            stream: _firestore
+                .collection('listings')
+                .where('userId', isEqualTo: user.uid)
+                .snapshots(),
+            builder: (context, snapshot) {
+              if (snapshot.connectionState == ConnectionState.waiting) {
+                return const Center(child: CircularProgressIndicator());
+              }
+
+              if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+                return const Center(
+                  child: Text(
+                    'No listings yet',
+                    style: TextStyle(color: Colors.grey),
+                  ),
+                );
+              }
+
+              final listings = snapshot.data!.docs;
+
+              return GridView.builder(
+                padding: const EdgeInsets.all(16),
+                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: 2,
+                  childAspectRatio: 0.75,
+                  crossAxisSpacing: 10,
+                  mainAxisSpacing: 10,
+                ),
+                itemCount: listings.length,
+                itemBuilder: (context, index) {
+                  final listing = listings[index].data() as Map<String, dynamic>;
+                  final listingId = listings[index].id;
+                  final name = listing['name'] ?? 'No Name';
+                  final price = listing['price'] ?? 0.0;
+                  final images = listing['images'] as List<dynamic>? ?? [];
+                  final imageUrl = images.isNotEmpty ? images[0] : '';
+
+                  return GestureDetector(
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => ItemDetailsScreen(
+                            listingId: listingId,
+                          ),
+                        ),
+                      );
+                    },
+                    child: Container(
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(12),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.grey.withValues(alpha: 0.2),
+                            blurRadius: 5,
+                            offset: const Offset(0, 2),
+                          ),
+                        ],
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          ClipRRect(
+                            borderRadius: const BorderRadius.vertical(
+                              top: Radius.circular(12),
+                            ),
+                            child: imageUrl.isNotEmpty
+                                ? Image.network(
+                                    imageUrl,
+                                    height: 120,
+                                    width: double.infinity,
+                                    fit: BoxFit.cover,
+                                  )
+                                : Container(
+                                    height: 120,
+                                    color: Colors.grey[300],
+                                    child: const Icon(
+                                      Icons.image,
+                                      size: 50,
+                                      color: Colors.grey,
+                                    ),
+                                  ),
+                          ),
+                          Padding(
+                            padding: const EdgeInsets.all(8.0),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  name,
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 14,
+                                  ),
+                                  maxLines: 2,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  'RM ${price.toStringAsFixed(2)}',
+                                  style: const TextStyle(
+                                    color: Color(0xFFD4A017),
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 16,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  );
+                },
+              );
+            },
+          ),
+        ),
+      ),
+    ).then((_) => _loadCounts());
+  }
+
+  void _showSavedItems() {
+    final user = _auth.currentUser;
+    if (user == null) return;
+
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => Scaffold(
+          appBar: AppBar(
+            title: const Text('Saved Items'),
+            backgroundColor: Colors.white,
+            foregroundColor: Colors.black,
+          ),
+          body: StreamBuilder<QuerySnapshot>(
+            stream: _firestore
+                .collection('users')
+                .doc(user.uid)
+                .collection('savedItems')
+                .snapshots(),
+            builder: (context, snapshot) {
+              if (snapshot.connectionState == ConnectionState.waiting) {
+                return const Center(child: CircularProgressIndicator());
+              }
+
+              if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+                return const Center(
+                  child: Text(
+                    'No saved items yet',
+                    style: TextStyle(color: Colors.grey),
+                  ),
+                );
+              }
+
+              final savedItems = snapshot.data!.docs;
+
+              return GridView.builder(
+                padding: const EdgeInsets.all(16),
+                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: 2,
+                  childAspectRatio: 0.75,
+                  crossAxisSpacing: 10,
+                  mainAxisSpacing: 10,
+                ),
+                itemCount: savedItems.length,
+                itemBuilder: (context, index) {
+                  final savedItem = savedItems[index].data() as Map<String, dynamic>;
+                  final listingId = savedItem['listingId'] ?? '';
+
+                  return FutureBuilder<DocumentSnapshot>(
+                    future: _firestore.collection('listings').doc(listingId).get(),
+                    builder: (context, listingSnapshot) {
+                      if (!listingSnapshot.hasData) {
+                        return Container(
+                          decoration: BoxDecoration(
+                            color: Colors.grey[200],
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        );
+                      }
+
+                      final listing = listingSnapshot.data!.data() as Map<String, dynamic>?;
+                      if (listing == null) {
+                        return Container();
+                      }
+
+                      final name = listing['name'] ?? 'No Name';
+                      final price = listing['price'] ?? 0.0;
+                      final images = listing['images'] as List<dynamic>? ?? [];
+                      final imageUrl = images.isNotEmpty ? images[0] : '';
+
+                      return GestureDetector(
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => ItemDetailsScreen(
+                                listingId: listingId,
+                              ),
+                            ),
+                          );
+                        },
+                        child: Container(
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(12),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.grey.withValues(alpha: 0.2),
+                                blurRadius: 5,
+                                offset: const Offset(0, 2),
+                              ),
+                            ],
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              ClipRRect(
+                                borderRadius: const BorderRadius.vertical(
+                                  top: Radius.circular(12),
+                                ),
+                                child: imageUrl.isNotEmpty
+                                    ? Image.network(
+                                        imageUrl,
+                                        height: 120,
+                                        width: double.infinity,
+                                        fit: BoxFit.cover,
+                                      )
+                                    : Container(
+                                        height: 120,
+                                        color: Colors.grey[300],
+                                        child: const Icon(
+                                          Icons.image,
+                                          size: 50,
+                                          color: Colors.grey,
+                                        ),
+                                      ),
+                              ),
+                              Padding(
+                                padding: const EdgeInsets.all(8.0),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      name,
+                                      style: const TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 14,
+                                      ),
+                                      maxLines: 2,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                    const SizedBox(height: 4),
+                                    Text(
+                                      'RM ${price.toStringAsFixed(2)}',
+                                      style: const TextStyle(
+                                        color: Color(0xFFD4A017),
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 16,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      );
+                    },
+                  );
+                },
+              );
+            },
+          ),
+        ),
+      ),
+    ).then((_) => _loadCounts());
   }
 }

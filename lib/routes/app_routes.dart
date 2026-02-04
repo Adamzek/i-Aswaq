@@ -3,7 +3,7 @@ import '../features/home/screens/home_screen.dart';
 import '../features/listing/screens/add_listing_screen.dart';
 import '../features/chat/screens/chat_screen.dart';
 import '../features/profile/screens/profile_screen.dart';
-import '../features/categories/screens/categories_screen.dart';
+import '../features/saved/screens/saved_items_screen.dart';
 
 class MainNavigation extends StatefulWidget {
   const MainNavigation({super.key});
@@ -18,7 +18,7 @@ class _MainNavigationState extends State<MainNavigation> {
   // Screens for each screens in nav
   final List<Widget> _screens = [
     const HomeScreen(),
-    const CategoriesScreen(),
+    const SavedItemsScreen(),
     const ChatScreen(),
     const ProfileScreen(),
   ];
@@ -57,7 +57,7 @@ class _MainNavigationState extends State<MainNavigation> {
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
               _buildNavItem(Icons.home_outlined, Icons.home, 'Home', 0),
-              _buildNavItem(Icons.grid_view_outlined, Icons.grid_view, 'Categories', 1),
+              _buildNavItem(Icons.favorite_border, Icons.favorite, 'Saved', 1),
               const SizedBox(width: 40), // Space for the floating button
               _buildNavItem(Icons.chat_bubble_outline, Icons.chat_bubble, 'Chat', 2),
               _buildNavItem(Icons.person_outline, Icons.person, 'Profile', 3),
