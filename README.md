@@ -5,6 +5,11 @@
 Matric No. : 2314361  
 Tasks Assigned:
 1. purpose, target users and preferred platform
+2. ensure UI/UX design consistent
+3. Implement the search function (search by item name)
+4. Implement the real-time chat screen 
+5. Implement saved items screen
+6. Handle navigation structure between Home → Item Details → Cha
 
 **AHMAD SHOLIHIN BIN KAMARUDDIN**  
 Matric No. : 2210097  
@@ -277,14 +282,13 @@ Figma - https://www.figma.com/design/NAHfUOrQXcoUweKFwgPuNQ/i-aswaq?node-id=3-31
 ## Implement Core functionalities
 1. Implement the item listing feature (Create, Read, Update, Delete) - Sholihin 2210097
 2. Implement the home screen & item details screen (display description, images, seller info) - Hilmi 2218517
-3. Implement the search function (search by item name) - Adam 2314361
+3. Implement the search function (search by item name) - Adam 2314361 & Hilmi 2218517
 4. Implement filters (category) - Hilmi 2218517 & Sholihin 2210097
 5. Implement the real-time chat screen UI components - Syamin 2219501 & Adam 2314361
 6. Handle navigation structure between Home → Item Details → Chat - Adam 2314361 & Syamin 2219501
 7. Connect UI buttons and form inputs to their respective controllers/functions - everyone
 8. Ensure screens load correctly with dummy data before backend integration - everyone
 9. Integrate with firebase services - Adam 2314361
-
 ---
 # References
 1. ChatGPT to scaffold base structure of the app - https://chatgpt.com/share/69819414-fa88-8003-814d-d4d65eaf0a19
