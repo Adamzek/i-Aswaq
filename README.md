@@ -151,28 +151,27 @@ Users can manage profile details such as name, contact, and profile picture
 ---
 
 #### Main App Navigation (Bottom Navigation Bar)
-**Home | Categories | Sell | Chat | Profile**
+**Home | Saved | Sell | Chat | Profile**
 
 ---
 
 ##### A. Home Screen
 - Featured items  
 - Search bar → *Search Results Screen*  
-- Quick filters  
 
 #### Home → Item Details Screen
-- Images, price, description, seller info  
-- Buttons: Chat Seller, Report, Save  
+- Images, condition, price, description, seller info  
+- Buttons: Chat Seller, Save  
 
 #### Item Details → Chat Screen
 
 ---
 
-#### B. Categories Screen
-- List of item categories  
+#### B. Saved Items Screen
+- List of Saved items   
 
-#### Category → Category Item List Screen  
-#### Category Item List → Item Details Screen  
+#### Saved → Saved Item List Screen  
+#### Saved Item List → Item Details Screen  
 (Then same flow as Home → Item Details)
 
 ---
@@ -216,9 +215,6 @@ Users can manage profile details such as name, contact, and profile picture
 
 #### Search Flow
 Home → Search Bar → Search Results Screen → Item Details → Chat
-
-#### Filter Flow
-Home / Category List → Filter → Apply Filters → Filtered Results → Item Details
 
 #### Screen Navigation Flow
 
@@ -281,13 +277,15 @@ Figma - https://www.figma.com/design/NAHfUOrQXcoUweKFwgPuNQ/i-aswaq?node-id=3-31
 ## Implement Core functionalities
 1. Implement the item listing feature (Create, Read, Update, Delete) - Sholihin 2210097
 2. Implement the home screen & item details screen (display description, images, seller info) - Hilmi 2218517
-3. Implement the search function (search by item name, category) - Adam 2314361
-4. Implement filters (price range, condition, category) - Hilmi 2218517 & Sholihin 2210097
+3. Implement the search function (search by item name) - Adam 2314361
+4. Implement filters (category) - Hilmi 2218517 & Sholihin 2210097
 5. Implement the real-time chat screen UI components - Syamin 2219501 & Adam 2314361
-6. Handle navigation structure between Home → Categories → Item Details → Chat - Adam 2314361 & Syamin 2219501
+6. Handle navigation structure between Home → Item Details → Chat - Adam 2314361 & Syamin 2219501
 7. Connect UI buttons and form inputs to their respective controllers/functions - everyone
 8. Ensure screens load correctly with dummy data before backend integration - everyone
+9. Integrate with firebase services - Adam 2314361
 
 ---
 # References
-
+1. ChatGPT to scaffold base structure of the app - https://chatgpt.com/share/69819414-fa88-8003-814d-d4d65eaf0a19
+2. ChatGPT for guides on firebase services - https://chatgpt.com/share/6982924f-7cac-8003-9d2c-db5c29a7f00d
