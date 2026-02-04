@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:io';
 import 'terms_and_conditions_screen.dart';
 import 'contact_support_screen.dart';
 import '../../auth/screens/login_screen.dart';
+import '../../../core/services/firestore_service.dart';
+import '../../../core/services/storage_service.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -16,19 +17,23 @@ class SettingsScreen extends StatefulWidget {
 
 class _SettingsScreenState extends State<SettingsScreen> {
   final FirebaseAuth _auth = FirebaseAuth.instance;
+  final FirestoreService _firestoreService = FirestoreService();
+  final StorageService _storageService = StorageService();
   final ImagePicker _picker = ImagePicker();
-  
+
   // Profile picture
   File? _profileImage;
+  String? _profileImageUrl;
   bool _isUploadingImage = false;
-  
+
   // Profile settings
-  final TextEditingController _nameController =
-      TextEditingController(text: '');
-  final TextEditingController _emailController =
-      TextEditingController(text: '');
-  final TextEditingController _phoneController =
-      TextEditingController(text: '');
+  final TextEditingController _nameController = TextEditingController(text: '');
+  final TextEditingController _emailController = TextEditingController(
+    text: '',
+  );
+  final TextEditingController _phoneController = TextEditingController(
+    text: '',
+  );
 
   // Notification settings
   bool _pushNotifications = true;
@@ -48,17 +53,17 @@ class _SettingsScreenState extends State<SettingsScreen> {
   bool _hasPrivacyChanges = false;
 
   // Original values for reset
-  late String _originalName;
-  late String _originalEmail;
-  late String _originalPhone;
-  late bool _originalPushNotifications;
-  late bool _originalEmailNotifications;
-  late bool _originalMessageNotifications;
-  late bool _originalListingUpdates;
-  late bool _originalShowEmail;
-  late bool _originalShowPhone;
-  late bool _originalShowActiveStatus;
-  late String _originalProfileVisibility;
+  String _originalName = '';
+  String _originalEmail = '';
+  String _originalPhone = '';
+  bool _originalPushNotifications = true;
+  bool _originalEmailNotifications = false;
+  bool _originalMessageNotifications = true;
+  bool _originalListingUpdates = true;
+  bool _originalShowEmail = false;
+  bool _originalShowPhone = true;
+  bool _originalShowActiveStatus = true;
+  String _originalProfileVisibility = 'Public';
 
   @override
   void initState() {
@@ -71,19 +76,24 @@ class _SettingsScreenState extends State<SettingsScreen> {
     _emailController.addListener(_checkProfileChanges);
     _phoneController.addListener(_checkProfileChanges);
   }
-  
-  void _loadUserData() {
+
+  void _loadUserData() async {
     final user = _auth.currentUser;
     if (user != null) {
       // Load email from Firebase (email is always available)
       _emailController.text = user.email ?? '';
-      
-      // Display name and phone would typically be stored in Firestore
-      // For now, we leave them empty as per user's request
       _nameController.text = user.displayName ?? '';
-      _phoneController.text = user.phoneNumber ?? '';
+
+      // Load phone and profile picture from Firestore
+      final userData = await _firestoreService.getUser(user.uid);
+      if (userData != null && mounted) {
+        setState(() {
+          _phoneController.text = userData['phone'] ?? '';
+          _profileImageUrl = userData['profileImageUrl'];
+        });
+      }
     }
-    
+
     // Store original profile values
     _originalName = _nameController.text;
     _originalEmail = _emailController.text;
@@ -91,19 +101,23 @@ class _SettingsScreenState extends State<SettingsScreen> {
   }
 
   Future<void> _loadSettings() async {
-    final prefs = await SharedPreferences.getInstance();
+    final user = _auth.currentUser;
+    if (user == null) return;
+
+    final settings = await _firestoreService.getUserSettings(user.uid);
+    if (!mounted) return;
     setState(() {
       // Load notification settings
-      _pushNotifications = prefs.getBool('pushNotifications') ?? true;
-      _emailNotifications = prefs.getBool('emailNotifications') ?? false;
-      _messageNotifications = prefs.getBool('messageNotifications') ?? true;
-      _listingUpdates = prefs.getBool('listingUpdates') ?? true;
+      _pushNotifications = settings?['pushNotifications'] ?? true;
+      _emailNotifications = settings?['emailNotifications'] ?? false;
+      _messageNotifications = settings?['messageNotifications'] ?? true;
+      _listingUpdates = settings?['listingUpdates'] ?? true;
 
       // Load privacy settings
-      _showEmail = prefs.getBool('showEmail') ?? false;
-      _showPhone = prefs.getBool('showPhone') ?? true;
-      _showActiveStatus = prefs.getBool('showActiveStatus') ?? true;
-      _profileVisibility = prefs.getString('profileVisibility') ?? 'Public';
+      _showEmail = settings?['showEmail'] ?? false;
+      _showPhone = settings?['showPhone'] ?? true;
+      _showActiveStatus = settings?['showActiveStatus'] ?? true;
+      _profileVisibility = settings?['profileVisibility'] ?? 'Public';
 
       // Store original values
       _originalPushNotifications = _pushNotifications;
@@ -118,25 +132,80 @@ class _SettingsScreenState extends State<SettingsScreen> {
   }
 
   Future<void> _saveNotificationSettingsToPersistence() async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setBool('pushNotifications', _pushNotifications);
-    await prefs.setBool('emailNotifications', _emailNotifications);
-    await prefs.setBool('messageNotifications', _messageNotifications);
-    await prefs.setBool('listingUpdates', _listingUpdates);
+    final user = _auth.currentUser;
+    if (user == null) return;
+
+    final settings = {
+      'pushNotifications': _pushNotifications,
+      'emailNotifications': _emailNotifications,
+      'messageNotifications': _messageNotifications,
+      'listingUpdates': _listingUpdates,
+    };
+
+    // Merge with existing settings
+    final existingSettings =
+        await _firestoreService.getUserSettings(user.uid) ?? {};
+    existingSettings.addAll(settings);
+    await _firestoreService.saveUserSettings(user.uid, existingSettings);
   }
 
   Future<void> _savePrivacySettingsToPersistence() async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setBool('showEmail', _showEmail);
-    await prefs.setBool('showPhone', _showPhone);
-    await prefs.setBool('showActiveStatus', _showActiveStatus);
-    await prefs.setString('profileVisibility', _profileVisibility);
+    final user = _auth.currentUser;
+    if (user == null) return;
+
+    final settings = {
+      'showEmail': _showEmail,
+      'showPhone': _showPhone,
+      'showActiveStatus': _showActiveStatus,
+      'profileVisibility': _profileVisibility,
+    };
+
+    // Merge with existing settings
+    final existingSettings =
+        await _firestoreService.getUserSettings(user.uid) ?? {};
+    existingSettings.addAll(settings);
+    await _firestoreService.saveUserSettings(user.uid, existingSettings);
+  }
+
+  Future<ImageSource?> _showImageSourceDialog() async {
+    return showModalBottomSheet<ImageSource>(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 20),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              ListTile(
+                leading: const Icon(Icons.camera_alt, color: Color(0xFFD4A017)),
+                title: const Text('Take Photo'),
+                onTap: () => Navigator.pop(context, ImageSource.camera),
+              ),
+              ListTile(
+                leading: const Icon(
+                  Icons.photo_library,
+                  color: Color(0xFFD4A017),
+                ),
+                title: const Text('Choose from Gallery'),
+                onTap: () => Navigator.pop(context, ImageSource.gallery),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 
   Future<void> _pickProfileImage() async {
     try {
+      final ImageSource? source = await _showImageSourceDialog();
+      if (source == null) return;
+
       final XFile? pickedFile = await _picker.pickImage(
-        source: ImageSource.gallery,
+        source: source,
         maxWidth: 512,
         maxHeight: 512,
         imageQuality: 75,
@@ -148,21 +217,46 @@ class _SettingsScreenState extends State<SettingsScreen> {
           _isUploadingImage = true;
         });
 
-        // Here you would upload to Firebase Storage
-        // For now, we'll just show success message
-        await Future.delayed(const Duration(seconds: 1));
-        
-        setState(() {
-          _isUploadingImage = false;
-        });
-
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Profile picture updated successfully'),
-              backgroundColor: Color(0xFFD4A017),
-            ),
+        final user = _auth.currentUser;
+        if (user != null) {
+          // Upload to Firebase Storage
+          String? imageUrl = await _storageService.uploadProfileImage(
+            user.uid,
+            _profileImage!,
           );
+
+          if (imageUrl != null) {
+            // Save URL to Firestore
+            await _firestoreService.updateUser(user.uid, {
+              'profileImageUrl': imageUrl,
+            });
+
+            setState(() {
+              _profileImageUrl = imageUrl;
+              _isUploadingImage = false;
+            });
+
+            if (mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('Profile picture updated successfully'),
+                  backgroundColor: Color(0xFFD4A017),
+                ),
+              );
+            }
+          } else {
+            setState(() {
+              _isUploadingImage = false;
+            });
+            if (mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('Failed to upload image'),
+                  backgroundColor: Colors.red,
+                ),
+              );
+            }
+          }
         }
       }
     } catch (e) {
@@ -193,9 +287,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
           ),
           TextButton(
             onPressed: () => Navigator.pop(context, true),
-            style: TextButton.styleFrom(
-              foregroundColor: Colors.red,
-            ),
+            style: TextButton.styleFrom(foregroundColor: Colors.red),
             child: const Text('Logout'),
           ),
         ],
@@ -208,9 +300,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
         if (mounted) {
           // Navigate to login screen and remove all previous routes
           Navigator.of(context).pushAndRemoveUntil(
-            MaterialPageRoute(
-              builder: (context) => const LoginScreen(),
-            ),
+            MaterialPageRoute(builder: (context) => const LoginScreen()),
             (route) => false,
           );
         }
@@ -245,9 +335,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
           ),
           TextButton(
             onPressed: () => Navigator.pop(context, true),
-            style: TextButton.styleFrom(
-              foregroundColor: Colors.red,
-            ),
+            style: TextButton.styleFrom(foregroundColor: Colors.red),
             child: const Text(
               'Delete',
               style: TextStyle(fontWeight: FontWeight.bold),
@@ -269,26 +357,31 @@ class _SettingsScreenState extends State<SettingsScreen> {
   }
 
   void _checkProfileChanges() {
+    if (!mounted) return;
     setState(() {
-      _hasProfileChanges = _nameController.text != _originalName ||
+      _hasProfileChanges =
+          _nameController.text != _originalName ||
           _emailController.text != _originalEmail ||
           _phoneController.text != _originalPhone;
     });
   }
 
   void _checkNotificationChanges() {
+    if (!mounted) return;
     setState(() {
       _hasNotificationChanges =
           _pushNotifications != _originalPushNotifications ||
-              _emailNotifications != _originalEmailNotifications ||
-              _messageNotifications != _originalMessageNotifications ||
-              _listingUpdates != _originalListingUpdates;
+          _emailNotifications != _originalEmailNotifications ||
+          _messageNotifications != _originalMessageNotifications ||
+          _listingUpdates != _originalListingUpdates;
     });
   }
 
   void _checkPrivacyChanges() {
+    if (!mounted) return;
     setState(() {
-      _hasPrivacyChanges = _showEmail != _originalShowEmail ||
+      _hasPrivacyChanges =
+          _showEmail != _originalShowEmail ||
           _showPhone != _originalShowPhone ||
           _showActiveStatus != _originalShowActiveStatus ||
           _profileVisibility != _originalProfileVisibility;
@@ -304,17 +397,21 @@ class _SettingsScreenState extends State<SettingsScreen> {
         if (_nameController.text != user.displayName) {
           await user.updateDisplayName(_nameController.text);
         }
-        
-        // Note: You would typically save phone number to Firestore
-        // as Firebase Auth phone number requires separate verification
-        
+
+        // Save phone number to Firestore
+        await _firestoreService.updateUser(user.uid, {
+          'phone': _phoneController.text.trim(),
+          'name': _nameController.text.trim(),
+          'email': _emailController.text.trim(),
+        });
+
         setState(() {
           _originalName = _nameController.text;
           _originalEmail = _emailController.text;
           _originalPhone = _phoneController.text;
           _hasProfileChanges = false;
         });
-        
+
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
@@ -448,17 +545,23 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       children: [
                         CircleAvatar(
                           radius: 60,
-                          backgroundColor: const Color(0xFFF2D06B).withValues(alpha: 0.3),
+                          backgroundColor: const Color(
+                            0xFFF2D06B,
+                          ).withValues(alpha: 0.3),
                           backgroundImage: _profileImage != null
                               ? FileImage(_profileImage!)
+                              : _profileImageUrl != null
+                              ? NetworkImage(_profileImageUrl!)
                               : null,
-                          child: _profileImage == null
+                          child:
+                              (_profileImage == null &&
+                                  _profileImageUrl == null)
                               ? Text(
                                   _nameController.text.isNotEmpty
                                       ? _nameController.text[0].toUpperCase()
                                       : _emailController.text.isNotEmpty
-                                          ? _emailController.text[0].toUpperCase()
-                                          : 'U',
+                                      ? _emailController.text[0].toUpperCase()
+                                      : 'U',
                                   style: const TextStyle(
                                     fontSize: 40,
                                     color: Color(0xFFD4A017),
@@ -551,7 +654,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   Expanded(
                     child: OutlinedButton.icon(
                       onPressed: _logout,
-                      icon: const Icon(Icons.logout, color: Colors.red, size: 20),
+                      icon: const Icon(
+                        Icons.logout,
+                        color: Colors.red,
+                        size: 20,
+                      ),
                       label: const Text(
                         'Logout',
                         style: TextStyle(
@@ -573,7 +680,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   Expanded(
                     child: OutlinedButton.icon(
                       onPressed: _deleteAccount,
-                      icon: const Icon(Icons.delete_forever, color: Colors.red, size: 20),
+                      icon: const Icon(
+                        Icons.delete_forever,
+                        color: Colors.red,
+                        size: 20,
+                      ),
                       label: const Text(
                         'Delete Account',
                         style: TextStyle(
@@ -820,10 +931,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
         children: [
           const Text(
             'Profile Visibility',
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.w600,
-            ),
+            style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
           ),
           const SizedBox(height: 10),
           _buildRadioTile(
@@ -1020,10 +1128,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(10),
-              borderSide: const BorderSide(
-                color: Color(0xFFD4A017),
-                width: 2,
-              ),
+              borderSide: const BorderSide(color: Color(0xFFD4A017), width: 2),
             ),
           ),
         ),
@@ -1053,10 +1158,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
               const SizedBox(height: 4),
               Text(
                 subtitle,
-                style: const TextStyle(
-                  fontSize: 13,
-                  color: Colors.grey,
-                ),
+                style: const TextStyle(fontSize: 13, color: Colors.grey),
               ),
             ],
           ),
@@ -1104,10 +1206,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   const SizedBox(height: 2),
                   Text(
                     subtitle,
-                    style: const TextStyle(
-                      fontSize: 13,
-                      color: Colors.grey,
-                    ),
+                    style: const TextStyle(fontSize: 13, color: Colors.grey),
                   ),
                 ],
               ),
@@ -1142,18 +1241,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
               ),
               const SizedBox(width: 15),
               Expanded(
-                child: Text(
-                  title,
-                  style: const TextStyle(fontSize: 16),
-                ),
+                child: Text(title, style: const TextStyle(fontSize: 16)),
               ),
               if (trailing != null)
                 Text(
                   trailing,
-                  style: const TextStyle(
-                    color: Colors.grey,
-                    fontSize: 14,
-                  ),
+                  style: const TextStyle(color: Colors.grey, fontSize: 14),
                 ),
               if (trailing == null)
                 const Icon(Icons.chevron_right, color: Colors.grey),

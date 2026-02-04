@@ -15,7 +15,10 @@ class FirestoreService {
   // Get user data
   Future<Map<String, dynamic>?> getUser(String userId) async {
     try {
-      DocumentSnapshot doc = await firestore.collection('users').doc(userId).get();
+      DocumentSnapshot doc = await firestore
+          .collection('users')
+          .doc(userId)
+          .get();
       if (doc.exists) {
         return doc.data() as Map<String, dynamic>;
       }
@@ -38,7 +41,9 @@ class FirestoreService {
   // Add listing
   Future<String?> addListing(Map<String, dynamic> listingData) async {
     try {
-      DocumentReference doc = await firestore.collection('listings').add(listingData);
+      DocumentReference doc = await firestore
+          .collection('listings')
+          .add(listingData);
       return doc.id;
     } catch (e) {
       print('Add listing error: $e');
@@ -66,7 +71,10 @@ class FirestoreService {
   // Get listing by id
   Future<Map<String, dynamic>?> getListing(String listingId) async {
     try {
-      DocumentSnapshot doc = await firestore.collection('listings').doc(listingId).get();
+      DocumentSnapshot doc = await firestore
+          .collection('listings')
+          .doc(listingId)
+          .get();
       if (doc.exists) {
         Map<String, dynamic> data = doc.data() as Map<String, dynamic>;
         data['id'] = doc.id;
@@ -80,7 +88,10 @@ class FirestoreService {
   }
 
   // Update listing
-  Future<void> updateListing(String listingId, Map<String, dynamic> listingData) async {
+  Future<void> updateListing(
+    String listingId,
+    Map<String, dynamic> listingData,
+  ) async {
     try {
       await firestore.collection('listings').doc(listingId).update(listingData);
     } catch (e) {
@@ -98,9 +109,16 @@ class FirestoreService {
   }
 
   // Send message
-  Future<void> sendMessage(String chatId, Map<String, dynamic> messageData) async {
+  Future<void> sendMessage(
+    String chatId,
+    Map<String, dynamic> messageData,
+  ) async {
     try {
-      await firestore.collection('chats').doc(chatId).collection('messages').add(messageData);
+      await firestore
+          .collection('chats')
+          .doc(chatId)
+          .collection('messages')
+          .add(messageData);
     } catch (e) {
       print('Send message error: $e');
     }
@@ -144,6 +162,38 @@ class FirestoreService {
     } catch (e) {
       print('Get user chats error: $e');
       return [];
+    }
+  }
+
+  // Save user settings
+  Future<void> saveUserSettings(
+    String userId,
+    Map<String, dynamic> settings,
+  ) async {
+    try {
+      await firestore.collection('users').doc(userId).set({
+        'settings': settings,
+      }, SetOptions(merge: true));
+    } catch (e) {
+      print('Save user settings error: $e');
+    }
+  }
+
+  // Get user settings
+  Future<Map<String, dynamic>?> getUserSettings(String userId) async {
+    try {
+      DocumentSnapshot doc = await firestore
+          .collection('users')
+          .doc(userId)
+          .get();
+      if (doc.exists) {
+        Map<String, dynamic>? data = doc.data() as Map<String, dynamic>?;
+        return data?['settings'] as Map<String, dynamic>?;
+      }
+      return null;
+    } catch (e) {
+      print('Get user settings error: $e');
+      return null;
     }
   }
 }

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../../chat/screens/conversation_screen.dart';
+import '../../profile/screens/user_profile_screen.dart';
 
 class ItemDetailsScreen extends StatefulWidget {
   final String listingId;
@@ -275,19 +276,32 @@ class _ItemDetailsScreenState extends State<ItemDetailsScreen> {
                               const SizedBox(height: 24),
 
                               // Seller Card
-                              Container(
-                                padding: const EdgeInsets.all(16),
-                                decoration: BoxDecoration(
-                                  color: Colors.grey[100],
-                                  borderRadius: BorderRadius.circular(15),
-                                ),
-                                child: Row(
-                                  children: [
-                                    CircleAvatar(
-                                      radius: 30,
-                                      backgroundColor: const Color(0xFFD4A017).withValues(alpha: 0.2),
-                                      child: Text(
-                                        seller.isNotEmpty ? seller[0].toUpperCase() : 'S',
+                              GestureDetector(
+                                onTap: () {
+                                  // Navigate to seller's profile
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) => UserProfileScreen(
+                                        userId: userId,
+                                        userName: seller,
+                                      ),
+                                    ),
+                                  );
+                                },
+                                child: Container(
+                                  padding: const EdgeInsets.all(16),
+                                  decoration: BoxDecoration(
+                                    color: Colors.grey[100],
+                                    borderRadius: BorderRadius.circular(15),
+                                  ),
+                                  child: Row(
+                                    children: [
+                                      CircleAvatar(
+                                        radius: 30,
+                                        backgroundColor: const Color(0xFFD4A017).withValues(alpha: 0.2),
+                                        child: Text(
+                                          seller.isNotEmpty ? seller[0].toUpperCase() : 'S',
                                         style: const TextStyle(
                                           fontSize: 24,
                                           fontWeight: FontWeight.bold,
@@ -335,6 +349,7 @@ class _ItemDetailsScreenState extends State<ItemDetailsScreen> {
                                   ],
                                 ),
                               ),
+                            ),
                               const SizedBox(height: 24),
 
                               // Description

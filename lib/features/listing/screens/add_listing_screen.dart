@@ -1,5 +1,5 @@
-import 'dart:io'; 
-import 'package:flutter/foundation.dart'; 
+import 'dart:io';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -16,7 +16,7 @@ class AddItemPage extends StatefulWidget {
 class _AddItemPageState extends State<AddItemPage> {
   final PageController _pageController = PageController();
   final _formKey = GlobalKey<FormState>();
-  int _currentStep = 0; 
+  int _currentStep = 0;
 
   final FirestoreService _firestoreService = FirestoreService();
   final StorageService _storageService = StorageService();
@@ -25,18 +25,24 @@ class _AddItemPageState extends State<AddItemPage> {
   final TextEditingController _titleController = TextEditingController();
   final TextEditingController _descController = TextEditingController();
   final TextEditingController _priceController = TextEditingController();
-  
-  String _selectedCondition = "Used"; 
+
+  String _selectedCondition = "Used";
   String _selectedCategory = "";
   bool _isLoading = false;
-  
-  List<XFile> _selectedImages = []; 
+
+  List<XFile> _selectedImages = [];
   final ImagePicker _picker = ImagePicker();
 
   final Color kGoldColor = const Color(0xFFD4AF37);
   final Color kGreyBackground = const Color(0xFFF5F5F5);
   final List<String> _categories = [
-    "Electronics", "Books", "Clothing", "Furniture", "Sports", "Stationery", "Others"
+    "Electronics",
+    "Books",
+    "Clothing",
+    "Furniture",
+    "Sports",
+    "Stationery",
+    "Others",
   ];
 
   @override
@@ -48,12 +54,47 @@ class _AddItemPageState extends State<AddItemPage> {
     super.dispose();
   }
 
+  Future<ImageSource?> _showImageSourceDialog() async {
+    return showModalBottomSheet<ImageSource>(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 20),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              ListTile(
+                leading: const Icon(Icons.camera_alt, color: Color(0xFFD4AF37)),
+                title: const Text('Take Photo'),
+                onTap: () => Navigator.pop(context, ImageSource.camera),
+              ),
+              ListTile(
+                leading: const Icon(
+                  Icons.photo_library,
+                  color: Color(0xFFD4AF37),
+                ),
+                title: const Text('Choose from Gallery'),
+                onTap: () => Navigator.pop(context, ImageSource.gallery),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   Future<void> _pickImage() async {
     if (_selectedImages.length >= 5) return;
 
     try {
-      final XFile? image = await _picker.pickImage(source: ImageSource.gallery);
-      
+      final ImageSource? source = await _showImageSourceDialog();
+      if (source == null) return;
+
+      final XFile? image = await _picker.pickImage(source: source);
+
       if (image != null) {
         setState(() {
           _selectedImages.add(image);
@@ -61,9 +102,9 @@ class _AddItemPageState extends State<AddItemPage> {
       }
     } catch (e) {
       print("Error picking image: $e");
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Failed to pick image")),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text("Failed to pick image")));
     }
   }
 
@@ -84,9 +125,9 @@ class _AddItemPageState extends State<AddItemPage> {
       return true;
     } else if (_currentStep == 1) {
       if (_titleController.text.trim().isEmpty) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Please enter a title')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('Please enter a title')));
         return false;
       }
       if (_descController.text.trim().isEmpty) {
@@ -102,9 +143,9 @@ class _AddItemPageState extends State<AddItemPage> {
         return false;
       }
       if (_priceController.text.trim().isEmpty) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Please enter a price')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('Please enter a price')));
         return false;
       }
       final price = double.tryParse(_priceController.text);
@@ -155,7 +196,10 @@ class _AddItemPageState extends State<AddItemPage> {
       List<String> imageUrls = [];
       for (XFile image in _selectedImages) {
         File imageFile = File(image.path);
-        String? url = await _storageService.uploadItemImage(listingId, imageFile);
+        String? url = await _storageService.uploadItemImage(
+          listingId,
+          imageFile,
+        );
         if (url != null) {
           imageUrls.add(url);
         }
@@ -187,9 +231,9 @@ class _AddItemPageState extends State<AddItemPage> {
       setState(() {
         _isLoading = false;
       });
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error publishing listing: $e')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Error publishing listing: $e')));
     }
   }
 
@@ -201,7 +245,7 @@ class _AddItemPageState extends State<AddItemPage> {
       );
       setState(() => _currentStep--);
     } else {
-      Navigator.pop(context); 
+      Navigator.pop(context);
     }
   }
 
@@ -222,7 +266,10 @@ class _AddItemPageState extends State<AddItemPage> {
             const Text(
               "Create Listing",
               style: TextStyle(
-                  color: Colors.black, fontWeight: FontWeight.bold, fontSize: 18),
+                color: Colors.black,
+                fontWeight: FontWeight.bold,
+                fontSize: 18,
+              ),
             ),
             Text(
               "Step ${_currentStep + 1} of 3",
@@ -248,7 +295,7 @@ class _AddItemPageState extends State<AddItemPage> {
       ),
       body: PageView(
         controller: _pageController,
-        physics: const NeverScrollableScrollPhysics(), 
+        physics: const NeverScrollableScrollPhysics(),
         children: [
           _buildStep1Photos(),
           _buildStep2Details(),
@@ -264,7 +311,7 @@ class _AddItemPageState extends State<AddItemPage> {
               color: Colors.black12,
               blurRadius: 10,
               offset: Offset(0, -5),
-            )
+            ),
           ],
         ),
         child: Column(
@@ -287,7 +334,10 @@ class _AddItemPageState extends State<AddItemPage> {
                     : Text(
                         _currentStep == 2 ? "Publish Listing" : "Continue",
                         style: const TextStyle(
-                            fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white),
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                        ),
                       ),
               ),
             ),
@@ -299,8 +349,8 @@ class _AddItemPageState extends State<AddItemPage> {
                   "Save as Draft",
                   style: TextStyle(color: Colors.grey, fontSize: 16),
                 ),
-              )
-            ]
+              ),
+            ],
           ],
         ),
       ),
@@ -344,11 +394,15 @@ class _AddItemPageState extends State<AddItemPage> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text("Add Photos",
-              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+          const Text(
+            "Add Photos",
+            style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+          ),
           const SizedBox(height: 8),
-          const Text("Add up to 5 photos. The first photo will be the cover.",
-              style: TextStyle(color: Colors.grey)),
+          const Text(
+            "Add up to 5 photos. The first photo will be the cover.",
+            style: TextStyle(color: Colors.grey),
+          ),
           const SizedBox(height: 24),
           Wrap(
             spacing: 16,
@@ -376,9 +430,13 @@ class _AddItemPageState extends State<AddItemPage> {
                           padding: const EdgeInsets.all(4),
                           decoration: const BoxDecoration(
                             color: Colors.black54,
-                            shape: BoxShape.circle
+                            shape: BoxShape.circle,
                           ),
-                          child: const Icon(Icons.close, size: 14, color: Colors.white),
+                          child: const Icon(
+                            Icons.close,
+                            size: 14,
+                            color: Colors.white,
+                          ),
                         ),
                       ),
                     ),
@@ -387,14 +445,20 @@ class _AddItemPageState extends State<AddItemPage> {
                         bottom: 8,
                         left: 8,
                         child: Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 6,
+                            vertical: 2,
+                          ),
                           decoration: BoxDecoration(
-                              color: kGoldColor,
-                              borderRadius: BorderRadius.circular(4)),
-                          child: const Text("Cover",
-                              style: TextStyle(fontSize: 10, color: Colors.white)),
+                            color: kGoldColor,
+                            borderRadius: BorderRadius.circular(4),
+                          ),
+                          child: const Text(
+                            "Cover",
+                            style: TextStyle(fontSize: 10, color: Colors.white),
+                          ),
                         ),
-                      )
+                      ),
                   ],
                 );
               }),
@@ -406,7 +470,10 @@ class _AddItemPageState extends State<AddItemPage> {
                     height: 100,
                     decoration: BoxDecoration(
                       color: Colors.white,
-                      border: Border.all(color: kGoldColor, style: BorderStyle.solid),
+                      border: Border.all(
+                        color: kGoldColor,
+                        style: BorderStyle.solid,
+                      ),
                       borderRadius: BorderRadius.circular(16),
                     ),
                     child: Column(
@@ -414,8 +481,10 @@ class _AddItemPageState extends State<AddItemPage> {
                       children: [
                         Icon(Icons.camera_alt_outlined, color: kGoldColor),
                         const SizedBox(height: 4),
-                        Text("Add Photo",
-                            style: TextStyle(color: kGoldColor, fontSize: 12))
+                        Text(
+                          "Add Photo",
+                          style: TextStyle(color: kGoldColor, fontSize: 12),
+                        ),
                       ],
                     ),
                   ),
@@ -435,15 +504,15 @@ class _AddItemPageState extends State<AddItemPage> {
         children: [
           _buildLabel("Title"),
           _buildTextField(
-            controller: _titleController, 
-            hint: "Item Name (e.g. MacBook Pro)"
+            controller: _titleController,
+            hint: "Item Name (e.g. MacBook Pro)",
           ),
-          
+
           _buildLabel("Description"),
           _buildTextField(
-            controller: _descController, 
-            hint: "Describe your item...", 
-            maxLines: 4
+            controller: _descController,
+            hint: "Describe your item...",
+            maxLines: 4,
           ),
 
           _buildLabel("Category"),
@@ -459,7 +528,7 @@ class _AddItemPageState extends State<AddItemPage> {
                 backgroundColor: kGreyBackground,
                 labelStyle: TextStyle(
                   color: isSelected ? Colors.white : Colors.black,
-                  fontWeight: isSelected ? FontWeight.bold : FontWeight.normal
+                  fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
                 ),
                 onSelected: (bool selected) {
                   setState(() {
@@ -483,9 +552,9 @@ class _AddItemPageState extends State<AddItemPage> {
 
           _buildLabel("Price (RM)"),
           _buildTextField(
-            controller: _priceController, 
-            hint: "0.00", 
-            isNumber: true
+            controller: _priceController,
+            hint: "0.00",
+            isNumber: true,
           ),
         ],
       ),
@@ -498,16 +567,22 @@ class _AddItemPageState extends State<AddItemPage> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text("Review Your Listing",
-              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+          const Text(
+            "Review Your Listing",
+            style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+          ),
           const SizedBox(height: 24),
-          
+
           Container(
             decoration: BoxDecoration(
               color: Colors.white,
               borderRadius: BorderRadius.circular(20),
               boxShadow: const [
-                 BoxShadow(color: Colors.black12, blurRadius: 15, offset: Offset(0, 5))
+                BoxShadow(
+                  color: Colors.black12,
+                  blurRadius: 15,
+                  offset: Offset(0, 5),
+                ),
               ],
             ),
             child: Column(
@@ -518,12 +593,20 @@ class _AddItemPageState extends State<AddItemPage> {
                   width: double.infinity,
                   decoration: BoxDecoration(
                     color: Colors.grey[200],
-                    borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+                    borderRadius: const BorderRadius.vertical(
+                      top: Radius.circular(20),
+                    ),
                   ),
                   clipBehavior: Clip.hardEdge,
-                  child: _selectedImages.isEmpty 
-                      ? const Center(child: Icon(Icons.image, size: 50, color: Colors.grey))
-                      : _buildImageDisplay(_selectedImages[0]), 
+                  child: _selectedImages.isEmpty
+                      ? const Center(
+                          child: Icon(
+                            Icons.image,
+                            size: 50,
+                            color: Colors.grey,
+                          ),
+                        )
+                      : _buildImageDisplay(_selectedImages[0]),
                 ),
                 Padding(
                   padding: const EdgeInsets.all(16.0),
@@ -531,13 +614,22 @@ class _AddItemPageState extends State<AddItemPage> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        _titleController.text.isEmpty ? "No Title" : _titleController.text,
-                        style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+                        _titleController.text.isEmpty
+                            ? "No Title"
+                            : _titleController.text,
+                        style: const TextStyle(
+                          fontSize: 22,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
                       const SizedBox(height: 8),
                       Text(
                         "RM ${_priceController.text}",
-                        style: TextStyle(fontSize: 24, color: kGoldColor, fontWeight: FontWeight.bold),
+                        style: TextStyle(
+                          fontSize: 24,
+                          color: kGoldColor,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
                       const SizedBox(height: 12),
                       Row(
@@ -545,18 +637,18 @@ class _AddItemPageState extends State<AddItemPage> {
                           _buildTag(_selectedCondition),
                           const SizedBox(width: 8),
                           if (_selectedCategory.isNotEmpty)
-                             _buildTag(_selectedCategory),
+                            _buildTag(_selectedCategory),
                         ],
-                      )
+                      ),
                     ],
                   ),
-                )
+                ),
               ],
             ),
           ),
-          
+
           const SizedBox(height: 30),
-          
+
           _buildEditOption("Edit Photos", () {
             _pageController.jumpToPage(0);
             setState(() => _currentStep = 0);
@@ -570,19 +662,22 @@ class _AddItemPageState extends State<AddItemPage> {
       ),
     );
   }
-  
+
   Widget _buildLabel(String text) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 8.0),
-      child: Text(text, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500)),
+      child: Text(
+        text,
+        style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
+      ),
     );
   }
 
   Widget _buildTextField({
-    required TextEditingController controller, 
-    required String hint, 
+    required TextEditingController controller,
+    required String hint,
     bool isNumber = false,
-    int maxLines = 1
+    int maxLines = 1,
   }) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 24.0),
@@ -594,7 +689,10 @@ class _AddItemPageState extends State<AddItemPage> {
           hintText: hint,
           filled: true,
           fillColor: Colors.white,
-          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+          contentPadding: const EdgeInsets.symmetric(
+            horizontal: 16,
+            vertical: 16,
+          ),
           enabledBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12),
             borderSide: BorderSide(color: Colors.grey[300]!),
@@ -637,7 +735,10 @@ class _AddItemPageState extends State<AddItemPage> {
         color: kGreyBackground,
         borderRadius: BorderRadius.circular(8),
       ),
-      child: Text(text, style: const TextStyle(color: Colors.grey, fontSize: 12)),
+      child: Text(
+        text,
+        style: const TextStyle(color: Colors.grey, fontSize: 12),
+      ),
     );
   }
 
@@ -648,7 +749,7 @@ class _AddItemPageState extends State<AddItemPage> {
         contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
         onTap: onTap,
         title: Text(title, style: const TextStyle(fontWeight: FontWeight.bold)),
-        trailing: Text(subtext, style: const TextStyle(color: Colors.grey)), 
+        trailing: Text(subtext, style: const TextStyle(color: Colors.grey)),
         tileColor: kGreyBackground,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         leading: Icon(Icons.edit, color: kGoldColor, size: 20),

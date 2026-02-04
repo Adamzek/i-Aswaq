@@ -3,6 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'settings_screen.dart';
 import '../../listing/screens/item_details_screen.dart';
+import '../../../core/services/firestore_service.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -14,9 +15,11 @@ class ProfileScreen extends StatefulWidget {
 class _ProfileScreenState extends State<ProfileScreen> {
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  final FirestoreService _firestoreService = FirestoreService();
   String _userName = 'User';
   String _userEmail = '';
   String? _userInitial;
+  String? _profileImageUrl;
   int _myListingsCount = 0;
   int _savedItemsCount = 0;
 
@@ -27,27 +30,36 @@ class _ProfileScreenState extends State<ProfileScreen> {
     _loadCounts();
   }
 
-  void _loadUserData() {
+  void _loadUserData() async {
     final user = _auth.currentUser;
     if (user != null) {
       setState(() {
         _userEmail = user.email ?? '';
-        
+
         // Use displayName if available, otherwise generate a username
         if (user.displayName != null && user.displayName!.isNotEmpty) {
           _userName = user.displayName!;
         } else {
           // Generate username from email or UID
           if (user.email != null) {
-            _userName = 'User${user.email!.split('@')[0].substring(0, 3).toUpperCase()}';
+            _userName =
+                'User${user.email!.split('@')[0].substring(0, 3).toUpperCase()}';
           } else {
             _userName = 'User${user.uid.substring(0, 6).toUpperCase()}';
           }
         }
-        
+
         // Get first letter of username for avatar
         _userInitial = _userName.isNotEmpty ? _userName[0].toUpperCase() : 'U';
       });
+
+      // Load profile picture from Firestore
+      final userData = await _firestoreService.getUser(user.uid);
+      if (userData != null) {
+        setState(() {
+          _profileImageUrl = userData['profileImageUrl'];
+        });
+      }
     }
   }
 
@@ -146,12 +158,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       _showSavedItems();
                     },
                   ),
-                  _buildMenuTile(
-                    Icons.history,
-                    'Purchase History',
-                    '',
-                    () {},
-                  ),
+                  _buildMenuTile(Icons.history, 'Purchase History', '', () {}),
                 ],
               ),
               const SizedBox(height: 30),
@@ -177,10 +184,18 @@ class _ProfileScreenState extends State<ProfileScreen> {
               CircleAvatar(
                 radius: 40,
                 backgroundColor: const Color(0xFFF2D06B).withValues(alpha: 0.3),
-                child: Text(
-                  _userInitial ?? 'U',
-                  style: const TextStyle(fontSize: 30, color: Color(0xFFD4A017)),
-                ),
+                backgroundImage: _profileImageUrl != null
+                    ? NetworkImage(_profileImageUrl!)
+                    : null,
+                child: _profileImageUrl == null
+                    ? Text(
+                        _userInitial ?? 'U',
+                        style: const TextStyle(
+                          fontSize: 30,
+                          color: Color(0xFFD4A017),
+                        ),
+                      )
+                    : null,
               ),
               const SizedBox(width: 15),
               // Name and Email
@@ -197,10 +212,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     ),
                     Text(
                       _userEmail,
-                      style: const TextStyle(
-                        color: Colors.grey,
-                        fontSize: 13,
-                      ),
+                      style: const TextStyle(color: Colors.grey, fontSize: 13),
                       overflow: TextOverflow.ellipsis,
                     ),
                   ],
@@ -248,21 +260,27 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   Widget _buildStatsRow(double screenWidth) {
     final isSmallScreen = screenWidth < 350;
-    
+
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
         Expanded(
-          child: _buildStatCard('3', 'Active\nListings', isSmallScreen),
+          child: _buildStatCard(
+            _myListingsCount.toString(),
+            'Active\nListings',
+            isSmallScreen,
+          ),
         ),
         SizedBox(width: screenWidth * 0.03),
         Expanded(
-          child: _buildStatCard('12', 'Items\nSold', isSmallScreen),
+          child: _buildStatCard(
+            _savedItemsCount.toString(),
+            'Saved\nItems',
+            isSmallScreen,
+          ),
         ),
         SizedBox(width: screenWidth * 0.03),
-        Expanded(
-          child: _buildStatCard('2024', 'Member\nSince', isSmallScreen),
-        ),
+        Expanded(child: _buildStatCard('2024', 'Member\nSince', isSmallScreen)),
       ],
     );
   }
@@ -368,10 +386,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             mainAxisSize: MainAxisSize.min,
             children: [
               if (trailing.isNotEmpty)
-                Text(
-                  trailing,
-                  style: const TextStyle(color: Colors.grey),
-                ),
+                Text(trailing, style: const TextStyle(color: Colors.grey)),
               const Icon(Icons.chevron_right, color: Colors.grey),
             ],
           ),
@@ -424,7 +439,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 ),
                 itemCount: listings.length,
                 itemBuilder: (context, index) {
-                  final listing = listings[index].data() as Map<String, dynamic>;
+                  final listing =
+                      listings[index].data() as Map<String, dynamic>;
                   final listingId = listings[index].id;
                   final title = listing['title'] ?? 'No Title';
                   final price = (listing['price'] ?? 0).toDouble();
@@ -436,9 +452,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (context) => ItemDetailsScreen(
-                            listingId: listingId,
-                          ),
+                          builder: (context) =>
+                              ItemDetailsScreen(listingId: listingId),
                         ),
                       );
                     },
@@ -491,7 +506,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                         shape: BoxShape.circle,
                                         boxShadow: [
                                           BoxShadow(
-                                            color: Colors.black.withValues(alpha: 0.2),
+                                            color: Colors.black.withValues(
+                                              alpha: 0.2,
+                                            ),
                                             blurRadius: 4,
                                           ),
                                         ],
@@ -502,7 +519,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                         padding: const EdgeInsets.all(8),
                                         constraints: const BoxConstraints(),
                                         onPressed: () {
-                                          _showEditDialog(listingId, title, price);
+                                          _showEditDialog(
+                                            listingId,
+                                            title,
+                                            price,
+                                          );
                                         },
                                       ),
                                     ),
@@ -513,13 +534,18 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                         shape: BoxShape.circle,
                                         boxShadow: [
                                           BoxShadow(
-                                            color: Colors.black.withValues(alpha: 0.2),
+                                            color: Colors.black.withValues(
+                                              alpha: 0.2,
+                                            ),
                                             blurRadius: 4,
                                           ),
                                         ],
                                       ),
                                       child: IconButton(
-                                        icon: const Icon(Icons.delete, size: 18),
+                                        icon: const Icon(
+                                          Icons.delete,
+                                          size: 18,
+                                        ),
                                         color: Colors.red,
                                         padding: const EdgeInsets.all(8),
                                         constraints: const BoxConstraints(),
@@ -592,19 +618,22 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 const SnackBar(content: Text('Listing deleted successfully')),
               );
             },
-            child: const Text(
-              'Delete',
-              style: TextStyle(color: Colors.red),
-            ),
+            child: const Text('Delete', style: TextStyle(color: Colors.red)),
           ),
         ],
       ),
     );
   }
 
-  void _showEditDialog(String listingId, String currentTitle, double currentPrice) {
+  void _showEditDialog(
+    String listingId,
+    String currentTitle,
+    double currentPrice,
+  ) {
     final titleController = TextEditingController(text: currentTitle);
-    final priceController = TextEditingController(text: currentPrice.toString());
+    final priceController = TextEditingController(
+      text: currentPrice.toString(),
+    );
 
     showDialog(
       context: context,
@@ -719,11 +748,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 ),
                 itemCount: savedItems.length,
                 itemBuilder: (context, index) {
-                  final savedItem = savedItems[index].data() as Map<String, dynamic>;
+                  final savedItem =
+                      savedItems[index].data() as Map<String, dynamic>;
                   final listingId = savedItem['listingId'] ?? '';
 
                   return FutureBuilder<DocumentSnapshot>(
-                    future: _firestore.collection('listings').doc(listingId).get(),
+                    future: _firestore
+                        .collection('listings')
+                        .doc(listingId)
+                        .get(),
                     builder: (context, listingSnapshot) {
                       if (!listingSnapshot.hasData) {
                         return Container(
@@ -734,7 +767,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         );
                       }
 
-                      final listing = listingSnapshot.data!.data() as Map<String, dynamic>?;
+                      final listing =
+                          listingSnapshot.data!.data() as Map<String, dynamic>?;
                       if (listing == null) {
                         return Container();
                       }
@@ -749,9 +783,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           Navigator.push(
                             context,
                             MaterialPageRoute(
-                              builder: (context) => ItemDetailsScreen(
-                                listingId: listingId,
-                              ),
+                              builder: (context) =>
+                                  ItemDetailsScreen(listingId: listingId),
                             ),
                           );
                         },
